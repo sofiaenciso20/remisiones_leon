@@ -139,5 +139,43 @@ class Remision {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row['total'];
     }
+
+    public function contarTotal() {
+        $query = "SELECT COUNT(*) as total FROM " . $this->table_name;
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row['total'];
+    }
+
+    // --- NUEVOS MÉTODOS PARA DASHBOARD ---
+    /**
+     * Contar remisiones por fecha específica
+     */
+    public function contarPorFecha($fecha) {
+        $query = "SELECT COUNT(*) as total 
+                  FROM " . $this->table_name . " 
+                  WHERE DATE(fecha_emision) = :fecha";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":fecha", $fecha);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row['total'];
+    }
+
+    /**
+     * Obtener remisiones recientes
+     */
+    public function obtenerRecientes($limite = 5) {
+        $query = "SELECT r.id_remision, r.numero_remision, r.fecha_emision, c.nombre_cliente
+                  FROM " . $this->table_name . " r
+                  LEFT JOIN clientes c ON r.id_cliente = c.id_cliente
+                  ORDER BY r.fecha_emision DESC
+                  LIMIT :limite";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 ?>

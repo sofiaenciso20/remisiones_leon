@@ -58,7 +58,7 @@ include __DIR__ . '/views/layout/header.php';
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="fecha_emision">Fecha de Emisión</label>
+                                        <label for="fecha_emision">Fecha de Remisión</label>
                                         <input type="date" class="form-control" id="fecha_emision" name="fecha_emision" 
                                                value="<?php echo date('Y-m-d'); ?>" required>
                                     </div>
@@ -84,9 +84,16 @@ include __DIR__ . '/views/layout/header.php';
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="persona_contacto">Persona de Contacto</label>
-                                        <select class="form-control" id="persona_contacto" name="id_persona">
-                                            <option value="">Seleccione...</option>
-                                        </select>
+                                        <div class="input-group">
+                                            <select class="form-control" id="persona_contacto" name="id_persona">
+                                                <option value="">Seleccione...</option>
+                                            </select>
+                                            <div class="input-group-append">
+                                                <button type="button" class="btn btn-info"  data-toggle="modal" data-target="#modalPersonaContacto" >
+                                                    <i class="fas fa-plus"></i> Nueva
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -196,6 +203,60 @@ include __DIR__ . '/views/layout/header.php';
     </div>
 </div>
 
+<!-- Modal para crear persona de contacto -->
+<div class="modal fade" id="modalPersonaContacto" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">
+                    <i class="fas fa-user-plus"></i> Nueva Persona de Contacto
+                </h4>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="formPersonaContacto">
+                <div class="modal-body">
+                    <input type="hidden" id="cliente_persona" name="id_cliente" value="">
+                    
+                    <div class="form-group">
+                        <label for="nombre_persona">Nombre Completo *</label>
+                        <input type="text" class="form-control" id="nombre_persona" name="nombre_persona" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cargo">Cargo</label>
+                        <input type="text" class="form-control" id="cargo" name="cargo" placeholder="Cargo o posición en la empresa">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="telefono_persona">Teléfono</label>
+                                <input type="text" class="form-control" id="telefono_persona" name="telefono">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="correo_persona">Correo Electrónico</label>
+                                <input type="email" class="form-control" id="correo_persona" name="correo">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Guardar Persona
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 $(document).ready(function() {
     // Inicializar Select2 para búsqueda de clientes
@@ -223,20 +284,33 @@ $(document).ready(function() {
     // Cargar personas de contacto cuando se selecciona un cliente
     $('#cliente').on('change', function() {
         const clienteId = $(this).val();
+        $('#cliente_persona').val(clienteId); // Establecer el cliente para el modal de persona
+        
+        // Habilitar o deshabilitar el botón de nueva persona
         if (clienteId) {
+            $('#btnNuevaPersona').prop('disabled', false);
+            
+            // Cargar personas de contacto del cliente seleccionado usando tu archivo existente
             $.ajax({
-                url: 'ajax/obtener_personas_contacto.php',
+                url: 'obtener_personas_contacto.php',
                 method: 'POST',
                 data: { id_cliente: clienteId },
                 dataType: 'json',
                 success: function(data) {
                     $('#persona_contacto').empty().append('<option value="">Seleccione...</option>');
-                    data.forEach(function(persona) {
-                        $('#persona_contacto').append(`<option value="${persona.id_persona}">${persona.nombre_persona}</option>`);
-                    });
+                    // Asegurarse de que data es un array antes de usar forEach
+                    if (Array.isArray(data)) {
+                        data.forEach(function(persona) {
+                            $('#persona_contacto').append(`<option value="${persona.id_persona}">${persona.nombre_persona}${persona.cargo ? ' - ' + persona.cargo : ''}</option>`);
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error al cargar personas de contacto:", error);
                 }
             });
         } else {
+            $('#btnNuevaPersona').prop('disabled', true);
             $('#persona_contacto').empty().append('<option value="">Seleccione...</option>');
         }
     });
@@ -344,6 +418,55 @@ $(document).ready(function() {
             },
             error: function() {
                 Swal.fire('Error', 'Error al crear el cliente', 'error');
+            }
+        });
+    });
+
+    // Manejar envío del formulario de persona de contacto
+    $('#formPersonaContacto').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Crear nueva persona de contacto
+        $.ajax({
+            url: 'ajax/crear_persona_contacto.php',
+            method: 'POST',
+            data: $(this).serialize(),
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    $('#modalPersonaContacto').modal('hide');
+                    $('#formPersonaContacto')[0].reset();
+                    
+                    // Actualizar el select de personas de contacto usando tu archivo existente
+                    const clienteId = $('#cliente').val();
+                    if (clienteId) {
+                        // Cargar personas de contacto
+                        $.ajax({
+                            url: 'obtener_personas_contacto.php',
+                            method: 'POST',
+                            data: { id_cliente: clienteId },
+                            dataType: 'json',
+                            success: function(data) {
+                                $('#persona_contacto').empty().append('<option value="">Seleccione...</option>');
+                                if (Array.isArray(data)) {
+                                    data.forEach(function(persona) {
+                                        $('#persona_contacto').append(`<option value="${persona.id_persona}">${persona.nombre_persona}${persona.cargo ? ' - ' + persona.cargo : ''}</option>`);
+                                    });
+                                    
+                                    // Seleccionar la nueva persona creada
+                                    $('#persona_contacto').val(response.persona.id_persona).trigger('change');
+                                }
+                            }
+                        });
+                    }
+                    
+                    Swal.fire('¡Éxito!', 'Persona de contacto creada correctamente', 'success');
+                } else {
+                    Swal.fire('Error', response.message, 'error');
+                }
+            },
+            error: function() {
+                Swal.fire('Error', 'Error al crear la persona de contacto', 'error');
             }
         });
     });

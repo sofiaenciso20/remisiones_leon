@@ -1,6 +1,6 @@
 <?php
 // models/ItemRemisionado.php
-require_once '../config/database.php';
+require_once __DIR__ . '/../config/database.php';
 
 class ItemRemisionado {
     private $conn;
@@ -25,7 +25,12 @@ class ItemRemisionado {
         $stmt->bindParam(":descripcion", $this->descripcion);
         $stmt->bindParam(":cantidad", $this->cantidad);
         
-        return $stmt->execute();
+        if($stmt->execute()) {
+            return $this->conn->lastInsertId();
+        }
+        
+        error_log("Error al crear item: " . implode(", ", $stmt->errorInfo()));
+        return false;
     }
 
     public function obtenerPorRemision($id_remision) {

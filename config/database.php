@@ -1,5 +1,4 @@
 <?php
-// config/database.php
 class Database {
     private $host = 'localhost';
     private $db_name = 'remisiones';
@@ -15,9 +14,9 @@ class Database {
             $this->conn->exec("set names utf8mb4");
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch(PDOException $exception) {
-            echo "Error de conexión: " . $exception->getMessage();
+            error_log("Error de conexión: " . $exception->getMessage());
+            echo "Error de conexión a la base de datos. Revisa los logs para más detalles.";
         }
         return $this->conn;
     }
 }
-?>

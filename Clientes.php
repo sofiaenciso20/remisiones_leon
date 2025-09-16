@@ -1,4 +1,5 @@
 <?php
+// filepath: c:\xampp\htdocs\remisiones\Clientes.php
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/models/Cliente.php';
 
@@ -10,6 +11,7 @@ $cliente = new Cliente($db);
 $stmt = $cliente->obtenerTodos();
 $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Incluir cabecera
 include __DIR__ . '/views/layout/header.php';
 ?>
 
@@ -103,6 +105,7 @@ include __DIR__ . '/views/layout/header.php';
             </div>
             <form id="formCrearCliente">
                 <div class="modal-body">
+                    <div id="alertContainer"></div>
                     <div class="row">
                         <div class="col-md-8">
                             <div class="form-group">
@@ -126,6 +129,7 @@ include __DIR__ . '/views/layout/header.php';
                             <div class="form-group">
                                 <label for="nit">NIT *</label>
                                 <input type="text" class="form-control" id="nit" name="nit" required>
+                                <small class="form-text text-muted">El NIT debe ser único para cada cliente.</small>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -146,7 +150,7 @@ include __DIR__ . '/views/layout/header.php';
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Crear Cliente</button>
+                    <button type="submit" class="btn btn-primary" id="btnCrearCliente">Crear Cliente</button>
                 </div>
             </form>
         </div>
@@ -155,8 +159,50 @@ include __DIR__ . '/views/layout/header.php';
 
 <?php include __DIR__ . '/views/layout/footer.php'; ?>
 
+<!-- Asegurarse de que jQuery esté cargado antes de este script -->
 <script>
+// Función para validar el formulario
+function validarFormulario() {
+    const nombre = $('#nombre_cliente').val().trim();
+    const tipo = $('#tipo_cliente').val();
+    const nit = $('#nit').val().trim();
+    
+    if (!nombre) {
+        mostrarAlerta('El nombre del cliente es obligatorio', 'danger');
+        return false;
+    }
+    
+    if (!tipo) {
+        mostrarAlerta('Debe seleccionar un tipo de cliente', 'danger');
+        return false;
+    }
+    
+    if (!nit) {
+        mostrarAlerta('El NIT es obligatorio', 'danger');
+        return false;
+    }
+    
+    // Si todo está bien, limpiar alertas y retornar true
+    $('#alertContainer').empty();
+    return true;
+}
+
+// Función para mostrar alertas
+function mostrarAlerta(mensaje, tipo) {
+    $('#alertContainer').html(
+        `<div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
+            ${mensaje}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>`
+    );
+}
+
+// Cuando el documento esté listo
 $(document).ready(function() {
+    console.log("Documento listo, inicializando DataTable...");
+    
     // Inicializar DataTable
     $('#tablaClientes').DataTable({
         "language": {
@@ -168,14 +214,36 @@ $(document).ready(function() {
 
     // Manejar envío del formulario
     $('#formCrearCliente').on('submit', function(e) {
+        console.log("Formulario enviado, previniendo comportamiento por defecto...");
+        
+        // Prevenir el envío tradicional del formulario
         e.preventDefault();
         
+        // Validar campos requeridos
+        if (!validarFormulario()) {
+            console.log("Validación fallida");
+            return;
+        }
+        
+        console.log("Enviando datos por AJAX...");
+        
+        // Mostrar indicador de carga
+        $('#btnCrearCliente').html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Procesando...').prop('disabled', true);
+        
+        // Obtener los datos del formulario
+        const formData = $(this).serialize();
+        console.log("Datos a enviar:", formData);
+        
+        // Enviar datos por AJAX
         $.ajax({
             url: 'ajax/crear_cliente.php',
             type: 'POST',
-            data: $(this).serialize(),
+            data: formData,
             dataType: 'json',
             success: function(response) {
+                console.log("Respuesta recibida:", response);
+                $('#btnCrearCliente').html('Crear Cliente').prop('disabled', false);
+                
                 if (response.success) {
                     Swal.fire({
                         icon: 'success',
@@ -184,6 +252,11 @@ $(document).ready(function() {
                         timer: 2000,
                         showConfirmButton: false
                     }).then(() => {
+                        $('#modalCrearCliente').modal('hide');
+                        // Limpiar formulario
+                        $('#formCrearCliente')[0].reset();
+                        $('#alertContainer').empty();
+                        // Recargar la página para ver el nuevo cliente
                         location.reload();
                     });
                 } else {
@@ -194,11 +267,13 @@ $(document).ready(function() {
                     });
                 }
             },
-            error: function() {
+            error: function(xhr, status, error) {
+                console.error("Error en la solicitud:", error);
+                $('#btnCrearCliente').html('Crear Cliente').prop('disabled', false);
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: 'Error al procesar la solicitud'
+                    text: 'Error al procesar la solicitud: ' + error
                 });
             }
         });
@@ -206,20 +281,18 @@ $(document).ready(function() {
 });
 
 function verCliente(id) {
-    // Implementar vista de cliente
     Swal.fire({
         icon: 'info',
         title: 'Ver Cliente',
-        text: 'Funcionalidad en desarrollo'
+        text: 'Funcionalidad en desarrollo. Cliente ID: ' + id
     });
 }
 
 function editarCliente(id) {
-    // Implementar edición de cliente
     Swal.fire({
         icon: 'info',
         title: 'Editar Cliente',
-        text: 'Funcionalidad en desarrollo'
+        text: 'Funcionalidad en desarrollo. Cliente ID: ' + id
     });
 }
 </script>

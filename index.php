@@ -249,6 +249,8 @@ $(document).ready(function() {
         e.preventDefault();
         
         const items = [];
+        let valid = true;
+        
         $('.item-row').each(function() {
             const descripcion = $(this).find('.descripcion').val();
             const cantidad = $(this).find('.cantidad').val();
@@ -258,16 +260,29 @@ $(document).ready(function() {
                     descripcion: descripcion,
                     cantidad: parseInt(cantidad)
                 });
+            } else {
+                valid = false;
+                $(this).find('.descripcion, .cantidad').addClass('is-invalid');
             }
         });
 
-        if (items.length === 0) {
-            Swal.fire('Error', 'Debe agregar al menos un item a la remisión', 'error');
+        if (!valid || items.length === 0) {
+            Swal.fire('Error', 'Debe completar todos los campos de los items', 'error');
             return;
         }
 
         const formData = new FormData(this);
         formData.append('items', JSON.stringify(items));
+
+        // Mostrar mensaje de carga
+        Swal.fire({
+            title: 'Procesando',
+            text: 'Guardando remisión...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading()
+            }
+        });
 
         $.ajax({
             url: 'ajax/crear_remision.php',
@@ -277,27 +292,29 @@ $(document).ready(function() {
             contentType: false,
             dataType: 'json',
             success: function(response) {
+                Swal.close();
                 if (response.success) {
                     Swal.fire({
                         title: '¡Éxito!',
-                        text: 'Remisión creada correctamente',
+                        text: response.message,
                         icon: 'success',
                         showCancelButton: true,
                         confirmButtonText: 'Imprimir PDF',
                         cancelButtonText: 'Crear Nueva'
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            window.open(`<?php echo __DIR__ . "/generar_pdf.php"; ?>?id=${response.id_remision}`, '_blank');
+                            window.open(`generar_pdf.php?id=${response.id_remision}`, '_blank');
                         }
                         limpiarFormulario();
-                        location.reload();
                     });
                 } else {
                     Swal.fire('Error', response.message, 'error');
                 }
             },
-            error: function() {
-                Swal.fire('Error', 'Error al procesar la solicitud', 'error');
+            error: function(xhr, status, error) {
+                Swal.close();
+                Swal.fire('Error', 'Error al procesar la solicitud: ' + error, 'error');
+                console.error("Error completo:", xhr.responseText);
             }
         });
     });
@@ -342,13 +359,13 @@ function agregarItem() {
                 <div class="col-md-8">
                     <div class="form-group">
                         <label>Descripción *</label>
-                        <input type="text" class="form-control descripcion" placeholder="Descripción del item..." required>
+                        <input type="text" class="form-control descripcion" name="descripcion[]" placeholder="Descripción del item..." required>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="form-group">
                         <label>Cantidad *</label>
-                        <input type="number" class="form-control cantidad" min="1" value="1" required>
+                        <input type="number" class="form-control cantidad" name="cantidad[]" min="1" value="1" required>
                     </div>
                 </div>
                 <div class="col-md-1">

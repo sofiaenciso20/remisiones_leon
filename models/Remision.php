@@ -20,27 +20,38 @@ class Remision {
     }
 
     public function crear() {
-        // Generar número de remisión automático
-        $this->numero_remision = $this->generarNumeroRemision();
+        // Validaciones básicas
+        if (empty($this->numero_remision)) {
+            throw new Exception("Número de remisión es requerido");
+        }
+        
+        if (empty($this->id_cliente)) {
+            throw new Exception("Cliente es requerido");
+        }
+        
+        // Generar número de remisión automático si no se proporcionó
+        if (empty($this->numero_remision)) {
+            $this->numero_remision = $this->generarNumeroRemision();
+        }
         
         $query = "INSERT INTO " . $this->table_name . " 
-                  SET numero_remision=:numero_remision, fecha_emision=:fecha_emision, 
-                      id_cliente=:id_cliente, id_persona=:id_persona, id_usuario=:id_usuario, 
-                      observaciones=:observaciones, id_estado=:id_estado";
+        (numero_remision, fecha_emision, id_cliente, id_persona, id_usuario, observaciones, id_estado)
+        VALUES (:numero_remision, NOW(), :id_cliente, :id_persona, :id_usuario, :observaciones, :id_estado)";
         
         $stmt = $this->conn->prepare($query);
         
-        $stmt->bindParam(":numero_remision", $this->numero_remision);
-        $stmt->bindParam(":fecha_emision", $this->fecha_emision);
-        $stmt->bindParam(":id_cliente", $this->id_cliente);
-        $stmt->bindParam(":id_persona", $this->id_persona);
-        $stmt->bindParam(":id_usuario", $this->id_usuario);
-        $stmt->bindParam(":observaciones", $this->observaciones);
-        $stmt->bindParam(":id_estado", $this->id_estado);
+        $stmt->bindParam(':numero_remision', $this->numero_remision);
+        $stmt->bindParam(':id_cliente', $this->id_cliente);
+        $stmt->bindParam(':id_persona', $this->id_persona);
+        $stmt->bindParam(':id_usuario', $this->id_usuario);
+        $stmt->bindParam(':observaciones', $this->observaciones);
+        $stmt->bindParam(':id_estado', $this->id_estado);
         
-        if($stmt->execute()) {
+        if ($stmt->execute()) {
             return $this->conn->lastInsertId();
         }
+        
+        error_log("Error al crear remisión: " . implode(", ", $stmt->errorInfo()));
         return false;
     }
 

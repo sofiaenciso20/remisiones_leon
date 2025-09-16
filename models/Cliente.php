@@ -19,20 +19,29 @@ class Cliente {
     }
 
     public function crear() {
+        // Primero verificar si el NIT ya existe
+        $query_check = "SELECT id_cliente FROM " . $this->table_name . " WHERE nit = :nit";
+        $stmt_check = $this->conn->prepare($query_check);
+        $stmt_check->bindParam(':nit', $this->nit);
+        $stmt_check->execute();
+        
+        if ($stmt_check->rowCount() > 0) {
+            throw new Exception("El NIT ya existe en la base de datos");
+        }
+
         $query = "INSERT INTO " . $this->table_name . " 
-                  SET nombre_cliente=:nombre_cliente, tipo_cliente=:tipo_cliente, nit=:nit, 
-                      direccion=:direccion, telefono=:telefono, correo=:correo";
+        (nombre_cliente, tipo_cliente, nit, direccion, telefono, correo)
+        VALUES (:nombre_cliente, :tipo_cliente, :nit, :direccion, :telefono, :correo)";
         
         $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':nombre_cliente', $this->nombre_cliente);
+        $stmt->bindParam(':tipo_cliente', $this->tipo_cliente);
+        $stmt->bindParam(':nit', $this->nit);
+        $stmt->bindParam(':direccion', $this->direccion);
+        $stmt->bindParam(':telefono', $this->telefono);
+        $stmt->bindParam(':correo', $this->correo);
         
-        $stmt->bindParam(":nombre_cliente", $this->nombre_cliente);
-        $stmt->bindParam(":tipo_cliente", $this->tipo_cliente);
-        $stmt->bindParam(":nit", $this->nit);
-        $stmt->bindParam(":direccion", $this->direccion);
-        $stmt->bindParam(":telefono", $this->telefono);
-        $stmt->bindParam(":correo", $this->correo);
-        
-        if($stmt->execute()) {
+        if ($stmt->execute()) {
             return $this->conn->lastInsertId();
         }
         return false;
@@ -77,7 +86,7 @@ class Cliente {
             $this->direccion = $row['direccion'];
             $this->telefono = $row['telefono'];
             $this->correo = $row['correo'];
-            return true;
+            return $row;
         }
         return false;
     }

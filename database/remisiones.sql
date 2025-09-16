@@ -42,7 +42,7 @@ CREATE TABLE `clientes` (
 --
 -- Estructura de tabla para la tabla `estados`
 --
-
+-- esto es un comentario
 CREATE TABLE `estados` (
   `id_estado` int(11) NOT NULL,
   `nombre_estado` varchar(50) NOT NULL

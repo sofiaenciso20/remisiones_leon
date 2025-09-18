@@ -68,7 +68,7 @@ protected $metadata;           // document properties
 protected $PDFVersion;         // PDF version number
 
 const VERSION = '1.85';
-}
+
 function __construct($orientation='P', $unit='mm', $size='A4')
 {
 	// Some checks
@@ -111,7 +111,7 @@ function __construct($orientation='P', $unit='mm', $size='A4')
 	else
 		$this->fontpath = '';
 	// Core fonts
-	$this->CoreFonts = array('courier', 'courierB', 'courierI', 'courierBI', 'helvetica', 'helveticaB', 'helveticaI', 'helveticaBI', 'times', 'timesB', 'timesI', 'timesBI', 'symbol', 'zapfdingbats');
+	$this->CoreFonts = array('courier', 'courierB', 'courierI', 'courierBI', 'helvetica', 'helveticaB', 'helveticaI', 'helveticaBI', 'times', 'timesB', 'timesI', 'timesBI', 'symbol', 'zapfdingbats', 'arial', 'arialB', 'arialI', 'arialBI');
 	// Scale factor
 	if($unit=='pt')
 		$this->k = 1;
@@ -465,7 +465,21 @@ function AddFont($family, $style='', $file='')
 	$fontkey = $family.$style;
 	if(isset($this->fonts[$fontkey]))
 		return;
-	$info = $this->_loadfont($file);
+	
+	$coreFont = str_replace('.php', '', $file);
+	if(in_array($coreFont, $this->CoreFonts)) {
+		// Para fuentes core, crear definición directamente sin cargar archivo
+		$info = array(
+			'type' => 'Core',
+			'name' => $this->_getCoreBaseName($coreFont),
+			'up' => -100,
+			'ut' => 50,
+			'cw' => array()
+		);
+	} else {
+		$info = $this->_loadfont($file);
+	}
+	
 	$info['i'] = count($this->fonts)+1;
 	if(!empty($info['file']))
 	{
@@ -476,6 +490,32 @@ function AddFont($family, $style='', $file='')
 			$this->FontFiles[$info['file']] = array('length1'=>$info['size1'], 'length2'=>$info['size2']);
 	}
 	$this->fonts[$fontkey] = $info;
+}
+
+function _getCoreBaseName($coreFont)
+{
+	$coreNames = array(
+		'courier' => 'Courier',
+		'courierB' => 'Courier-Bold',
+		'courierI' => 'Courier-Oblique',
+		'courierBI' => 'Courier-BoldOblique',
+		'helvetica' => 'Helvetica',
+		'helveticaB' => 'Helvetica-Bold',
+		'helveticaI' => 'Helvetica-Oblique',
+		'helveticaBI' => 'Helvetica-BoldOblique',
+		'times' => 'Times-Roman',
+		'timesB' => 'Times-Bold',
+		'timesI' => 'Times-Italic',
+		'timesBI' => 'Times-BoldItalic',
+		'symbol' => 'Symbol',
+		'zapfdingbats' => 'ZapfDingbats',
+		'arial' => 'Helvetica',
+		'arialB' => 'Helvetica-Bold',
+		'arialI' => 'Helvetica-Oblique',
+		'arialBI' => 'Helvetica-BoldOblique'
+	);
+	
+	return isset($coreNames[$coreFont]) ? $coreNames[$coreFont] : $coreFont;
 }
 
 function SetFont($family, $style='', $size=0)
@@ -505,8 +545,6 @@ function SetFont($family, $style='', $size=0)
 	if(!isset($this->fonts[$fontkey]))
 	{
 		// Test if one of the core fonts
-		if($family=='arial')
-			$family = 'helvetica';
 		if(in_array($family,$this->CoreFonts))
 		{
 			if(!isset($this->fonts[$fontkey]))
@@ -639,7 +677,7 @@ function Cell($w, $h=0, $txt='', $border=0, $ln=0, $align='', $fill=false, $link
 			$s .= 'q '.$this->TextColor.' ';
 		$s .= sprintf('BT %.2F %.2F Td (%s) Tj ET',($this->x+$dx)*$k,($this->h-($this->y+.5*$h+.3*$this->FontSize))*$k,$this->_escape($txt));
 		if($this->underline)
-			$s .= ' '.$this->_dounderline($this->x+$dx,$this->y+.5*$h+.3*$this->FontSize,$txt);
+			$s .= ' '.$this->_dounderline($this->x+$dx,$this->y+.5*$h-.5*$this->FontSize,$txt);
 		if($this->ColorFlag)
 			$s .= ' Q';
 		if($link)
@@ -1128,7 +1166,26 @@ protected function _loadfont($file)
 	// Load a font definition file from the font directory
 	if(strpos($file,'/')!==false || strpos($file,"\\")!==false)
 		$this->Error('Incorrect font definition file name: '.$file);
-	include($this->fontpath.$file);
+	
+	$fullPath = $this->fontpath.$file;
+	if(!file_exists($fullPath)) {
+		// Si es una fuente core, usar valores por defecto
+		$coreFont = str_replace('.php', '', $file);
+		if(in_array($coreFont, $this->CoreFonts)) {
+			// Retornar definición básica para fuentes core
+			return array(
+				'type' => 'core',
+				'name' => $coreFont,
+				'up' => -100,
+				'ut' => 50,
+				'cw' => array()
+			);
+		} else {
+			$this->Error('Font definition file not found: '.$file);
+		}
+	}
+	
+	include($fullPath);
 	if(!isset($name))
 		$this->Error('Could not include font definition file');
 	if(isset($enc))
@@ -1704,15 +1761,54 @@ protected function _putimages()
 
 protected function _putimage(&$info)
 {
-    $this->_newobj();
-    $info['n'] = $this->n;
-    $this->_out('<</Type /XObject');
-    $this->_out('/Subtype /Image');
-    $this->_out('/Width '.$info['w']); // Punto y coma añadido
-    $this->_out('/Height '.$info['h']); // Punto y coma añadido
-    if($info['cs'] == 'Indexed') { // Corregido a "==" y añadido "{"
-        $this->_out('/ColorSpace [/Indexed /DeviceRGB '.(strlen($info['pal'])/3-1).' '.($this->n+1).' 0 R]');
-    } else {
-        // Manejar otros casos si es necesario
-    }
+	$this->_newobj();
+	$info['n'] = $this->n;
+	$this->_out('<</Type /XObject');
+	$this->_out('/Subtype /Image');
+	$this->_out('/Width '.$info['w']);
+	$this->_out('/Height '.$info['h']);
+	if($info['cs']=='Indexed')
+		$this->_out('/ColorSpace [/Indexed /DeviceRGB '.(strlen($info['pal'])/3-1).' '.($this->n+1).' 0 R]');
+	else
+		$this->_out('/ColorSpace /'.$info['cs']);
+	$this->_out('/BitsPerComponent '.$info['bpc']);
+	if(isset($info['f']))
+		$this->_out('/Filter /'.$info['f']);
+	if(isset($info['dp']))
+		$this->_out($info['dp']);
+	if(isset($info['pal']))
+	{
+		// Indexed colors
+		$l = strlen($info['pal']);
+		$this->_newobj();
+		$this->_out('<<');
+		$this->_out('/Length '.$l);
+		$this->_out('>>');
+		$this->_putstream($info['pal']);
+		$this->_out('endobj');
+	}
+	if(isset($info['trns']) && is_array($info['trns']))
+	{
+		// Transparency
+		$trns = '';
+		$ct = count($info['trns']);
+		if($ct==1)
+			$trns = '/Mask '.($info['trns'][0]).' '.($info['trns'][0]);
+		elseif($ct==3)
+			$trns = '/Mask ['.($info['trns'][0]).' '.($info['trns'][0]).' '.($info['trns'][1]).' '.($info['trns'][1]).' '.($info['trns'][2]).' '.($info['trns'][2]).']';
+		if($trns)
+			$this->_out($trns);
+	}
+	if(isset($info['smask']))
+	{
+		// Soft mask
+		$this->_out('/SMask '.($this->n).' 0 R');
+	}
+	$this->_out('/Length '.strlen($info['data']).'>>');
+	$this->_putstream($info['data']);
+	$this->_out('endobj');
 }
+
+// El archivo FPDF parece estar correctamente formateado
+}
+?>

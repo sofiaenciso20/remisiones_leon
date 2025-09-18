@@ -1,14 +1,18 @@
 <?php
-require_once 'models/Remision.php';
-require_once 'models/ItemRemisionado.php';
-require_once 'lib/fpdf/fpdf.php';
+require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/models/Remision.php';
+require_once __DIR__ . '/models/ItemRemisionado.php';
+require_once __DIR__ . '/lib/fpdf/fpdf.php';
 
 if (!isset($_GET['id'])) {
     die('ID de remisión no especificado');
 }
 
-$remision = new Remision();
-$itemRemisionado = new ItemRemisionado();
+$database = new Database();
+$db = $database->getConnection();
+
+$remision = new Remision($db);
+$itemRemisionado = new ItemRemisionado($db);
 
 $datos = $remision->obtenerPorId($_GET['id']);
 $items = $itemRemisionado->obtenerPorRemision($_GET['id']);

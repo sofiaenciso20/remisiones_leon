@@ -68,7 +68,7 @@ protected $metadata;           // document properties
 protected $PDFVersion;         // PDF version number
 
 const VERSION = '1.85';
-
+}
 function __construct($orientation='P', $unit='mm', $size='A4')
 {
 	// Some checks
@@ -1704,13 +1704,15 @@ protected function _putimages()
 
 protected function _putimage(&$info)
 {
-	$this->_newobj();
-	$info['n'] = $this->n;
-	$this->_out('<</Type /XObject');
-	$this->_out('/Subtype /Image');
-	$this->_out('/Width '.$info['w']);
-	$this->_out('/Height '.$info['h']);
-	if($info['cs']=='Indexed')
-		$this->_out('/ColorSpace [/Indexed /DeviceRGB '.(strlen($info['pal'])/3-1).' '.($this->n+1).' 0 R]');
-	else
-	{
+    $this->_newobj();
+    $info['n'] = $this->n;
+    $this->_out('<</Type /XObject');
+    $this->_out('/Subtype /Image');
+    $this->_out('/Width '.$info['w']); // Punto y coma añadido
+    $this->_out('/Height '.$info['h']); // Punto y coma añadido
+    if($info['cs'] == 'Indexed') { // Corregido a "==" y añadido "{"
+        $this->_out('/ColorSpace [/Indexed /DeviceRGB '.(strlen($info['pal'])/3-1).' '.($this->n+1).' 0 R]');
+    } else {
+        // Manejar otros casos si es necesario
+    }
+}

@@ -1,10 +1,16 @@
 <?php
-require_once '../models/Remision.php';
-require_once '../models/ItemRemisionado.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../models/Remision.php';
+require_once __DIR__ . '/../models/ItemRemisionado.php';
 
 if (isset($_POST['id_remision'])) {
-    $remision = new Remision();
-    $itemRemisionado = new ItemRemisionado();
+    // Crear conexión a la base de datos
+    $database = new Database();
+    $db = $database->getConnection();
+    
+    // Instanciar los modelos pasando la conexión (esto es lo que faltaba)
+    $remision = new Remision($db);
+    $itemRemisionado = new ItemRemisionado($db);
     
     $datos = $remision->obtenerPorId($_POST['id_remision']);
     $items = $itemRemisionado->obtenerPorRemision($_POST['id_remision']);
@@ -13,10 +19,10 @@ if (isset($_POST['id_remision'])) {
         ?>
         <div class="row">
             <div class="col-md-6">
-                <strong>Número de Remisión:</strong> <?php echo $datos['numero_remision']; ?><br>
-                <strong>Fecha:</strong> <?php echo date('d/m/Y', strtotime($datos['fecha_emision'])); ?><br>
-                <strong>Cliente:</strong> <?php echo htmlspecialchars($datos['nombre_cliente']); ?><br>
-                <strong>NIT:</strong> <?php echo htmlspecialchars($datos['nit']); ?>
+                <strong>Número de Remisión:</strong> <?php echo $datos['numero_remision'] ?? 'N/A'; ?><br>
+                <strong>Fecha:</strong> <?php echo isset($datos['fecha_emision']) ? date('d/m/Y', strtotime($datos['fecha_emision'])) : 'N/A'; ?><br>
+                <strong>Cliente:</strong> <?php echo htmlspecialchars($datos['nombre_cliente'] ?? 'N/A'); ?><br>
+                <strong>NIT:</strong> <?php echo htmlspecialchars($datos['nit'] ?? 'N/A'); ?>
             </div>
             <div class="col-md-6">
                 <strong>Dirección:</strong> <?php echo htmlspecialchars($datos['direccion'] ?? 'N/A'); ?><br>
@@ -37,12 +43,18 @@ if (isset($_POST['id_remision'])) {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($items as $item): ?>
+                    <?php if (!empty($items)): ?>
+                        <?php foreach ($items as $item): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($item['descripcion'] ?? 'N/A'); ?></td>
+                                <td class="text-center"><?php echo $item['cantidad'] ?? 0; ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
                         <tr>
-                            <td><?php echo htmlspecialchars($item['descripcion']); ?></td>
-                            <td class="text-center"><?php echo $item['cantidad']; ?></td>
+                            <td colspan="2" class="text-center text-muted">No hay items registrados</td>
                         </tr>
-                    <?php endforeach; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -55,7 +67,7 @@ if (isset($_POST['id_remision'])) {
         
         <hr>
         <div class="text-center">
-            <a href="generar_pdf.php?id=<?php echo $datos['id_remision']; ?>" 
+            <a href="generar_pdf.php?id=<?php echo $datos['id_remision'] ?? 0; ?>" 
                target="_blank" class="btn btn-danger">
                 <i class="fas fa-file-pdf"></i> Descargar PDF
             </a>
@@ -64,5 +76,7 @@ if (isset($_POST['id_remision'])) {
     } else {
         echo '<p class="text-center text-muted">No se encontraron datos de la remisión.</p>';
     }
+} else {
+    echo '<p class="text-center text-danger">Error: ID de remisión no proporcionado.</p>';
 }
 ?>

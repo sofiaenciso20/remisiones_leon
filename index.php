@@ -89,7 +89,7 @@ include __DIR__ . '/views/layout/header.php';
                                                 <option value="">Seleccione...</option>
                                             </select>
                                             <div class="input-group-append">
-                                                <button type="button" class="btn btn-info"  data-toggle="modal" data-target="#modalPersonaContacto" >
+                                                <button type="button" id="btnNuevaPersona" class="btn btn-info" data-toggle="modal" data-target="#modalPersonaContacto" disabled>
                                                     <i class="fas fa-plus"></i> Nueva
                                                 </button>
                                             </div>
@@ -292,7 +292,7 @@ $(document).ready(function() {
             
             // Cargar personas de contacto del cliente seleccionado usando tu archivo existente
             $.ajax({
-                url: 'obtener_personas_contacto.php',
+                url: 'ajax/obtener_personas_contacto.php',
                 method: 'POST',
                 data: { id_cliente: clienteId },
                 dataType: 'json',
@@ -426,6 +426,13 @@ $(document).ready(function() {
     $('#formPersonaContacto').on('submit', function(e) {
         e.preventDefault();
         
+        const clienteId = $('#cliente').val();
+        if(!clienteId){
+            Swal.fire('Error', 'Debe seleccionar un cliente primero', 'error');
+            return;
+        }
+        $('#cliente_persona').val(clienteId);
+
         // Crear nueva persona de contacto
         $.ajax({
             url: 'ajax/crear_persona_contacto.php',
@@ -442,7 +449,7 @@ $(document).ready(function() {
                     if (clienteId) {
                         // Cargar personas de contacto
                         $.ajax({
-                            url: 'obtener_personas_contacto.php',
+                            url: 'ajax/obtener_personas_contacto.php',
                             method: 'POST',
                             data: { id_cliente: clienteId },
                             dataType: 'json',
@@ -460,15 +467,23 @@ $(document).ready(function() {
                         });
                     }
                     
-                    Swal.fire('¡Éxito!', 'Persona de contacto creada correctamente', 'success');
+                    const msg = response.duplicado ? 'La persona ya existía y se reutilizó' : 'Persona de contacto creada correctamente';
+                    Swal.fire('¡Éxito!', msg, 'success');
                 } else {
                     Swal.fire('Error', response.message, 'error');
                 }
             },
-            error: function() {
-                Swal.fire('Error', 'Error al crear la persona de contacto', 'error');
+            error: function(xhr) {
+                let msg = 'Error al crear la persona de contacto';
+                try { const r = JSON.parse(xhr.responseText); if (r.message) msg = r.message; } catch(e) {}
+                Swal.fire('Error', msg, 'error');
             }
         });
+    });
+
+    $('#modalPersonaContacto').on('show.bs.modal', function() {
+        const cid = $('#cliente').val();
+        $('#cliente_persona').val(cid || '');
     });
 });
 

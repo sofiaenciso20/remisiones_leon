@@ -13,7 +13,7 @@ $remision = new Remision($db);
 $termino = $_GET['buscar'] ?? '';
 $fecha_inicio = $_GET['fecha_inicio'] ?? '';
 $fecha_fin = $_GET['fecha_fin'] ?? '';
-$pagina = $_GET['pagina'] ?? 1;
+$pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
 $por_pagina = 10;
 
 $stmt = $remision->buscarRemisiones($termino, $fecha_inicio, $fecha_fin);
@@ -109,21 +109,21 @@ include 'views/layout/header.php';
                                         <?php foreach ($remisiones as $rem): ?>
                                             <tr>
                                                 <td>
-                                                    <strong><?php echo $rem['numero_remision']; ?></strong>
+                                                    <strong><?php echo $rem['numero_remision'] ?? 'N/A'; ?></strong>
                                                 </td>
                                                 <td>
-                                                    <?php echo date('d/m/Y', strtotime($rem['fecha_emision'])); ?>
+                                                    <?php echo isset($rem['fecha_emision']) ? date('d/m/Y', strtotime($rem['fecha_emision'])) : 'N/A'; ?>
                                                 </td>
-                                                <td><?php echo htmlspecialchars($rem['nombre_cliente']); ?></td>
-                                                <td><?php echo htmlspecialchars($rem['nit']); ?></td>
+                                                <td><?php echo htmlspecialchars($rem['nombre_cliente'] ?? 'N/A'); ?></td>
+                                                <td><?php echo htmlspecialchars($rem['nit'] ?? 'N/A'); ?></td>
                                                 <td><?php echo htmlspecialchars($rem['nombre_persona'] ?? 'N/A'); ?></td>
                                                 <td>
                                                     <div class="btn-group" role="group">
                                                         <button type="button" class="btn btn-info btn-sm" 
-                                                                onclick="verRemision(<?php echo $rem['id_remision']; ?>)">
+                                                                onclick="verRemision(<?php echo $rem['id_remision'] ?? 0; ?>)">
                                                             <i class="fas fa-eye"></i>
                                                         </button>
-                                                        <a href="generar_pdf.php?id=<?php echo $rem['id_remision']; ?>" 
+                                                        <a href="generar_pdf.php?id=<?php echo $rem['id_remision'] ?? 0; ?>" 
                                                            target="_blank" class="btn btn-danger btn-sm">
                                                             <i class="fas fa-file-pdf"></i>
                                                         </a>
@@ -199,6 +199,11 @@ include 'views/layout/header.php';
 
 <script>
 function verRemision(id) {
+    if (id === 0) {
+        Swal.fire('Error', 'ID de remisión no válido', 'error');
+        return;
+    }
+    
     $.ajax({
         url: 'ajax/ver_remision.php',
         method: 'POST',

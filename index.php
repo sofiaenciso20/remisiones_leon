@@ -1,9 +1,8 @@
 <?php
-// index.php
-require_once __DIR__ . '/config/database.php';
-require_once __DIR__ . '/models/Cliente.php';
-require_once __DIR__ . '/models/Remision.php';
-require_once __DIR__ . '/models/PersonaContacto.php';
+require_once 'config/database.php';
+require_once 'models/Cliente.php';
+require_once 'models/Remision.php';
+require_once 'models/PersonaContacto.php';
 
 // Crear conexión a la base de datos
 $database = new Database();
@@ -16,7 +15,7 @@ $personaContacto = new PersonaContacto($db);
 
 $siguiente_numero = $remision->generarNumeroRemision();
 
-include __DIR__ . '/views/layout/header.php';
+include 'views/layout/header.php';
 ?>
 
 <!-- Content Header -->
@@ -58,7 +57,7 @@ include __DIR__ . '/views/layout/header.php';
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="fecha_emision">Fecha de Remisión</label>
+                                        <label for="fecha_emision">Fecha de Emisión</label>
                                         <input type="date" class="form-control" id="fecha_emision" name="fecha_emision" 
                                                value="<?php echo date('Y-m-d'); ?>" required>
                                     </div>
@@ -89,7 +88,7 @@ include __DIR__ . '/views/layout/header.php';
                                                 <option value="">Seleccione...</option>
                                             </select>
                                             <div class="input-group-append">
-                                                <button type="button" id="btnNuevaPersona" class="btn btn-info" data-toggle="modal" data-target="#modalPersonaContacto" disabled>
+                                                <button type="button" class="btn btn-success btn-sm" onclick="abrirModalPersonaContacto()">
                                                     <i class="fas fa-plus"></i> Nueva
                                                 </button>
                                             </div>
@@ -217,31 +216,31 @@ include __DIR__ . '/views/layout/header.php';
             </div>
             <form id="formPersonaContacto">
                 <div class="modal-body">
-                    <input type="hidden" id="cliente_persona" name="id_cliente" value="">
+                    <input type="hidden" id="cliente_persona_contacto" name="id_cliente">
                     
                     <div class="form-group">
                         <label for="nombre_persona">Nombre Completo *</label>
                         <input type="text" class="form-control" id="nombre_persona" name="nombre_persona" required>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="cargo">Cargo</label>
-                        <input type="text" class="form-control" id="cargo" name="cargo" placeholder="Cargo o posición en la empresa">
-                    </div>
-                    
                     <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="cargo_persona">Cargo</label>
+                                <input type="text" class="form-control" id="cargo_persona" name="cargo">
+                            </div>
+                        </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="telefono_persona">Teléfono</label>
                                 <input type="text" class="form-control" id="telefono_persona" name="telefono">
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="correo_persona">Correo Electrónico</label>
-                                <input type="email" class="form-control" id="correo_persona" name="correo">
-                            </div>
-                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="correo_persona">Correo Electrónico</label>
+                        <input type="email" class="form-control" id="correo_persona" name="correo">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -259,6 +258,8 @@ include __DIR__ . '/views/layout/header.php';
 
 <script>
 $(document).ready(function() {
+    cargarSiguienteNumero();
+    
     // Inicializar Select2 para búsqueda de clientes
     $('#cliente').select2({
         placeholder: 'Buscar cliente...',
@@ -281,50 +282,21 @@ $(document).ready(function() {
         }
     });
 
-    // Cargar personas de contacto cuando se selecciona un cliente
     $('#cliente').on('change', function() {
         const clienteId = $(this).val();
-        $('#cliente_persona').val(clienteId); // Establecer el cliente para el modal de persona
-        
-        // Habilitar o deshabilitar el botón de nueva persona
+        console.log('[v0] Cliente seleccionado:', clienteId);
         if (clienteId) {
-            $('#btnNuevaPersona').prop('disabled', false);
-            
-            // Cargar personas de contacto del cliente seleccionado usando tu archivo existente
-            $.ajax({
-                url: 'ajax/obtener_personas_contacto.php',
-                method: 'POST',
-                data: { id_cliente: clienteId },
-                dataType: 'json',
-                success: function(data) {
-                    $('#persona_contacto').empty().append('<option value="">Seleccione...</option>');
-                    // Asegurarse de que data es un array antes de usar forEach
-                    if (Array.isArray(data)) {
-                        data.forEach(function(persona) {
-                            $('#persona_contacto').append(`<option value="${persona.id_persona}">${persona.nombre_persona}${persona.cargo ? ' - ' + persona.cargo : ''}</option>`);
-                        });
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error("Error al cargar personas de contacto:", error);
-                }
-            });
+            cargarPersonasContacto(clienteId);
         } else {
-            $('#btnNuevaPersona').prop('disabled', true);
             $('#persona_contacto').empty().append('<option value="">Seleccione...</option>');
         }
     });
-
-    // Agregar primer item automáticamente
-    agregarItem();
 
     // Manejar envío del formulario de remisión
     $('#formRemision').on('submit', function(e) {
         e.preventDefault();
         
         const items = [];
-        let valid = true;
-        
         $('.item-row').each(function() {
             const descripcion = $(this).find('.descripcion').val();
             const cantidad = $(this).find('.cantidad').val();
@@ -334,29 +306,19 @@ $(document).ready(function() {
                     descripcion: descripcion,
                     cantidad: parseInt(cantidad)
                 });
-            } else {
-                valid = false;
-                $(this).find('.descripcion, .cantidad').addClass('is-invalid');
             }
         });
 
-        if (!valid || items.length === 0) {
-            Swal.fire('Error', 'Debe completar todos los campos de los items', 'error');
+        if (items.length === 0) {
+            Swal.fire('Error', 'Debe agregar al menos un item a la remisión', 'error');
             return;
         }
 
         const formData = new FormData(this);
         formData.append('items', JSON.stringify(items));
 
-        // Mostrar mensaje de carga
-        Swal.fire({
-            title: 'Procesando',
-            text: 'Guardando remisión...',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading()
-            }
-        });
+        console.log('[v0] Enviando datos del formulario...');
+        console.log('[v0] Items:', items);
 
         $.ajax({
             url: 'ajax/crear_remision.php',
@@ -366,11 +328,11 @@ $(document).ready(function() {
             contentType: false,
             dataType: 'json',
             success: function(response) {
-                Swal.close();
+                console.log('[v0] Respuesta del servidor:', response);
                 if (response.success) {
                     Swal.fire({
                         title: '¡Éxito!',
-                        text: response.message,
+                        text: `Remisión #${response.numero_remision} creada correctamente`,
                         icon: 'success',
                         showCancelButton: true,
                         confirmButtonText: 'Imprimir PDF',
@@ -380,15 +342,17 @@ $(document).ready(function() {
                             window.open(`generar_pdf.php?id=${response.id_remision}`, '_blank');
                         }
                         limpiarFormulario();
+                        cargarSiguienteNumero();
                     });
                 } else {
+                    console.log('[v0] Error en respuesta:', response);
                     Swal.fire('Error', response.message, 'error');
                 }
             },
             error: function(xhr, status, error) {
-                Swal.close();
-                Swal.fire('Error', 'Error al procesar la solicitud: ' + error, 'error');
-                console.error("Error completo:", xhr.responseText);
+                console.log('[v0] Error AJAX:', error);
+                console.log('[v0] Respuesta completa:', xhr.responseText);
+                Swal.fire('Error', 'Error al procesar la solicitud', 'error');
             }
         });
     });
@@ -422,69 +386,36 @@ $(document).ready(function() {
         });
     });
 
-    // Manejar envío del formulario de persona de contacto
     $('#formPersonaContacto').on('submit', function(e) {
         e.preventDefault();
         
-        const clienteId = $('#cliente').val();
-        if(!clienteId){
-            Swal.fire('Error', 'Debe seleccionar un cliente primero', 'error');
-            return;
-        }
-        $('#cliente_persona').val(clienteId);
-
-        // Crear nueva persona de contacto
         $.ajax({
             url: 'ajax/crear_persona_contacto.php',
             method: 'POST',
             data: $(this).serialize(),
             dataType: 'json',
             success: function(response) {
+                console.log('[v0] Respuesta crear persona:', response);
                 if (response.success) {
                     $('#modalPersonaContacto').modal('hide');
                     $('#formPersonaContacto')[0].reset();
                     
-                    // Actualizar el select de personas de contacto usando tu archivo existente
-                    const clienteId = $('#cliente').val();
-                    if (clienteId) {
-                        // Cargar personas de contacto
-                        $.ajax({
-                            url: 'ajax/obtener_personas_contacto.php',
-                            method: 'POST',
-                            data: { id_cliente: clienteId },
-                            dataType: 'json',
-                            success: function(data) {
-                                $('#persona_contacto').empty().append('<option value="">Seleccione...</option>');
-                                if (Array.isArray(data)) {
-                                    data.forEach(function(persona) {
-                                        $('#persona_contacto').append(`<option value="${persona.id_persona}">${persona.nombre_persona}${persona.cargo ? ' - ' + persona.cargo : ''}</option>`);
-                                    });
-                                    
-                                    // Seleccionar la nueva persona creada
-                                    $('#persona_contacto').val(response.persona.id_persona).trigger('change');
-                                }
-                            }
-                        });
-                    }
+                    const nuevaPersona = response.persona;
+                    $('#persona_contacto').append(`<option value="${nuevaPersona.id_persona}" selected>${nuevaPersona.nombre_persona}</option>`);
                     
-                    const msg = response.duplicado ? 'La persona ya existía y se reutilizó' : 'Persona de contacto creada correctamente';
-                    Swal.fire('¡Éxito!', msg, 'success');
+                    Swal.fire('¡Éxito!', 'Persona de contacto creada correctamente', 'success');
                 } else {
-                    Swal.fire('Error', response.message, 'error');
+                    Swal.fire('Error', response.message || 'Error al crear la persona de contacto', 'error');
                 }
             },
-            error: function(xhr) {
-                let msg = 'Error al crear la persona de contacto';
-                try { const r = JSON.parse(xhr.responseText); if (r.message) msg = r.message; } catch(e) {}
-                Swal.fire('Error', msg, 'error');
+            error: function(xhr, status, error) {
+                console.log('[v0] Error AJAX crear persona:', xhr.responseText);
+                Swal.fire('Error', 'Error al crear la persona de contacto', 'error');
             }
         });
     });
 
-    $('#modalPersonaContacto').on('show.bs.modal', function() {
-        const cid = $('#cliente').val();
-        $('#cliente_persona').val(cid || '');
-    });
+    agregarItem();
 });
 
 let contadorItems = 0;
@@ -496,14 +427,16 @@ function agregarItem() {
             <div class="row">
                 <div class="col-md-8">
                     <div class="form-group">
-                        <label>Descripción *</label>
-                        <input type="text" class="form-control descripcion" name="descripcion[]" placeholder="Descripción del item..." required>
+                        <label for="descripcion-${contadorItems}">Descripción *</label>
+                        <input type="text" class="form-control descripcion" id="descripcion-${contadorItems}" 
+                               name="descripcion-${contadorItems}" placeholder="Descripción del item..." required>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="form-group">
-                        <label>Cantidad *</label>
-                        <input type="number" class="form-control cantidad" name="cantidad[]" min="1" value="1" required>
+                        <label for="cantidad-${contadorItems}">Cantidad *</label>
+                        <input type="number" class="form-control cantidad" id="cantidad-${contadorItems}" 
+                               name="cantidad-${contadorItems}" min="1" value="1" required>
                     </div>
                 </div>
                 <div class="col-md-1">
@@ -537,16 +470,74 @@ function limpiarFormulario() {
     contadorItems = 0;
     agregarItem();
     
-    // Actualizar número de remisión
+    cargarSiguienteNumero();
+}
+
+// Función para abrir modal de persona de contacto
+function abrirModalPersonaContacto() {
+    const clienteId = $('#cliente').val();
+    if (!clienteId) {
+        Swal.fire('Advertencia', 'Primero debe seleccionar un cliente', 'warning');
+        return;
+    }
+    
+    $('#cliente_persona_contacto').val(clienteId);
+    $('#modalPersonaContacto').modal('show');
+}
+
+function cargarPersonasContacto(clienteId) {
+    console.log('[v0] Cargando personas de contacto para cliente:', clienteId);
+    
+    $.ajax({
+        url: 'ajax/obtener_personas_contacto.php',
+        method: 'POST',
+        data: { id_cliente: clienteId },
+        dataType: 'json',
+        success: function(response) {
+            console.log('[v0] Respuesta completa:', response);
+            $('#persona_contacto').empty().append('<option value="">Seleccione...</option>');
+            
+            if (response.success && response.data && response.data.length > 0) {
+                response.data.forEach(function(persona) {
+                    console.log('[v0] Agregando persona:', persona);
+                    $('#persona_contacto').append(`<option value="${persona.id_persona}">${persona.nombre_persona}</option>`);
+                });
+            } else {
+                console.log('[v0] No se encontraron personas de contacto');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.log('[v0] Error al cargar personas:', error);
+            console.log('[v0] Respuesta del servidor:', xhr.responseText);
+            $('#persona_contacto').empty().append('<option value="">Seleccione...</option>');
+        }
+    });
+}
+
+function cargarSiguienteNumero() {
+    console.log('[v0] Cargando siguiente número de remisión...');
+    
     $.ajax({
         url: 'ajax/obtener_siguiente_numero.php',
         method: 'GET',
         dataType: 'json',
         success: function(response) {
-            $('#numero_remision').val(response.siguiente_numero);
+            console.log('[v0] Respuesta número remisión:', response);
+            if (response.success) {
+                $('#numero_remision').val(response.siguiente_numero);
+                console.log('[v0] Número de remisión cargado:', response.siguiente_numero);
+            } else {
+                console.log('[v0] Error al obtener número:', response.message);
+                $('#numero_remision').val(1);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.log('[v0] Error AJAX obtener número:', error);
+            console.log('[v0] Respuesta del servidor:', xhr.responseText);
+            $('#numero_remision').val(1);
         }
     });
 }
 </script>
 
-<?php include __DIR__ . '/views/layout/footer.php'; ?>
+<?php include 'views/layout/footer.php'; ?>

@@ -105,6 +105,12 @@
                             <p>Clientes</p>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="PersonasContacto.php" class="nav-link">
+                            <i class="nav-icon fas fa-user-friends"></i>
+                            <p>Personas de Contacto</p>
+                        </a>
+                    </li>
                 </ul>
             </nav>
         </div>

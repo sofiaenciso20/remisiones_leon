@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/Remision.php';
 require_once __DIR__ . '/../models/ItemRemisionado.php';
+require_once __DIR__ . '/../models/Producto.php';
 
 header('Content-Type: application/json');
 
@@ -20,12 +21,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception('El campo id_cliente es obligatorio');
         }
 
+        if (empty($_POST['numero_remision'])) {
+            throw new Exception('El campo numero_remision es obligatorio');
+        }
+
         // Crear instancia de modelos
         $remision = new Remision($db);
         $itemRemisionado = new ItemRemisionado($db);
 
         // Asignar valores a la remisión
-        $remision->fecha_emision   = date('Y-m-d');
+        $remision->numero_remision = (int) $_POST['numero_remision'];
+        $remision->fecha_emision   = $_POST['fecha_emision'];
         $remision->id_cliente      = (int) $_POST['id_cliente'];
         $remision->id_persona      = !empty($_POST['id_persona']) ? (int) $_POST['id_persona'] : null;
         $remision->id_usuario      = 1; // Usuario fijo por ahora
@@ -40,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($id_remision) {
             $items_success = true;
+            $items_procesados = 0;
 
             // Procesar los ítems si existen
             if (!empty($_POST['items'])) {
@@ -50,7 +57,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 if ($items && is_array($items) && count($items) > 0) {
-                    $items_success = $itemRemisionado->crearItems($id_remision, $items);
+                    foreach ($items as $item) {
+                        // Validar item
+                        if (empty($item['descripcion']) || empty($item['cantidad'])) {
+                            continue; // Saltar item inválido
+                        }
+
+                        // Crear instancia de ItemRemisionado para cada item
+                        $itemObj = new ItemRemisionado($db);
+                        $itemObj->id_remision = $id_remision;
+                        $itemObj->id_producto = !empty($item['id_producto']) ? (int) $item['id_producto'] : null;
+                        $itemObj->descripcion = $item['descripcion'];
+                        $itemObj->cantidad = (int) $item['cantidad'];
+                        $itemObj->valor_unitario = !empty($item['valor_unitario']) ? (float) $item['valor_unitario'] : 0.00;
+
+                        // Insertar item
+                        if ($itemObj->crear()) {
+                            $items_procesados++;
+                        } else {
+                            error_log("Error al crear item: " . print_r($item, true));
+                        }
+                    }
+                    
+                    $items_success = ($items_procesados > 0);
                 }
             }
 
@@ -59,6 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'message' => 'Remisión creada correctamente',
                 'id_remision' => $id_remision,
                 'numero_remision' => $remision->numero_remision,
+                'items_procesados' => $items_procesados,
                 'items_success' => $items_success
             ]);
         } else {

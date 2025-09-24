@@ -20,8 +20,10 @@ class Remision {
     }
 
     public function crear() {
-        // Generar número de remisión automático
-        $this->numero_remision = $this->generarNumeroRemision();
+        // Usar el número de remisión que viene del formulario, si no existe generar uno
+        if (empty($this->numero_remision)) {
+            $this->numero_remision = $this->generarNumeroRemision();
+        }
         
         $query = "INSERT INTO " . $this->table_name . " 
                   SET numero_remision=:numero_remision, fecha_emision=:fecha_emision, 
@@ -39,8 +41,11 @@ class Remision {
         $stmt->bindParam(":id_estado", $this->id_estado);
         
         if($stmt->execute()) {
-            return $this->conn->lastInsertId();
+            $this->id_remision = $this->conn->lastInsertId();
+            return $this->id_remision;
         }
+
+        error_log("Error al crear remisión: " . print_r($stmt->errorInfo(), true));
         return false;
     }
 
@@ -80,6 +85,7 @@ class Remision {
             return $result['total'];
             
         } catch (PDOException $exception) {
+            error_log("Error en contarRemisiones: " . $exception->getMessage());
             return 0;
         }
     }

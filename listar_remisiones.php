@@ -18,7 +18,7 @@ $por_pagina = 10;
 
 $stmt = $remision->buscarRemisiones($termino, $fecha_inicio, $fecha_fin);
 $remisiones = $stmt->fetchAll(PDO::FETCH_ASSOC);
-$total = count($remisiones); // Ahora $remisiones es un array, no un PDOStatement
+$total = count($remisiones);
 
 $total_remisiones = $remision->contarRemisiones($termino);
 $total_paginas = ceil($total_remisiones / $por_pagina);
@@ -94,13 +94,14 @@ include 'views/layout/header.php';
                                         <th>Cliente</th>
                                         <th>NIT</th>
                                         <th>Persona Contacto</th>
+                                        <th>Teléfono Contacto</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php if (empty($remisiones)): ?>
                                         <tr>
-                                            <td colspan="6" class="text-center">
+                                            <td colspan="7" class="text-center">
                                                 <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                                                 <p class="text-muted">No se encontraron remisiones</p>
                                             </td>
@@ -117,6 +118,7 @@ include 'views/layout/header.php';
                                                 <td><?php echo htmlspecialchars($rem['nombre_cliente'] ?? 'N/A'); ?></td>
                                                 <td><?php echo htmlspecialchars($rem['nit'] ?? 'N/A'); ?></td>
                                                 <td><?php echo htmlspecialchars($rem['nombre_persona'] ?? 'N/A'); ?></td>
+                                                <td><?php echo htmlspecialchars($rem['telefono'] ?? 'N/A'); ?></td>
                                                 <td>
                                                     <div class="btn-group" role="group">
                                                         <button type="button" class="btn btn-info btn-sm" 
@@ -196,6 +198,29 @@ include 'views/layout/header.php';
         </div>
     </div>
 </div>
+
+<style>
+.observaciones-responsive {
+    max-height: 200px;
+    overflow-y: auto;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.detalles-remision .row {
+    margin-bottom: 15px;
+}
+
+.detalles-remision .col-md-6 {
+    margin-bottom: 10px;
+}
+</style>
 
 <script>
 function verRemision(id) {

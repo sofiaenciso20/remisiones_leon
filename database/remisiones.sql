@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 24-09-2025 a las 22:43:30
+-- Tiempo de generación: 01-10-2025 a las 13:33:58
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -118,7 +118,8 @@ INSERT INTO `items_remisionados` (`id_item`, `id_remision`, `id_producto`, `desc
 (31, 15, NULL, 'caja de carton ', 1, 22222.00),
 (32, 16, NULL, 'caja de carton ', 2, 2222.00),
 (33, 17, NULL, 'bolsas de papel', 100, 0.00),
-(34, 18, 1, 'bolsas de papel', 1, 0.00);
+(34, 18, 1, 'bolsas de papel', 1, 0.00),
+(35, 19, 3, 'ROMAN SPIRIT – VOL. I', 1, 45000.00);
 
 -- --------------------------------------------------------
 
@@ -167,7 +168,8 @@ CREATE TABLE `productos` (
 
 INSERT INTO `productos` (`id_producto`, `nombre_producto`, `fecha_creacion`) VALUES
 (1, 'bolsas de papel', '2025-09-24 17:10:17'),
-(2, 'caja de carton ', '2025-09-24 17:10:40');
+(2, 'caja de carton ', '2025-09-24 17:10:40'),
+(3, 'ROMAN SPIRIT – VOL. I', '2025-10-01 13:31:45');
 
 -- --------------------------------------------------------
 
@@ -208,7 +210,8 @@ INSERT INTO `remisiones` (`id_remision`, `numero_remision`, `fecha_emision`, `id
 (15, 15, '2025-09-24 00:00:00', 3, 4, 1, 'sdaaffsdfsdfsdf', 1),
 (16, 16, '2025-09-24 00:00:00', 3, 4, 1, 'fdfdsfsdsf', 1),
 (17, 17, '2025-09-24 00:00:00', 1, 7, 1, 'dasdasdasd', 1),
-(18, 18, '2025-09-24 00:00:00', 1, 7, 1, 'BBVBBVB', 1);
+(18, 18, '2025-09-24 00:00:00', 1, 7, 1, 'BBVBBVB', 1),
+(19, 19, '2025-10-01 00:00:00', 1, 7, 1, '', 1);
 
 -- --------------------------------------------------------
 
@@ -308,7 +311,7 @@ ALTER TABLE `estados`
 -- AUTO_INCREMENT de la tabla `items_remisionados`
 --
 ALTER TABLE `items_remisionados`
-  MODIFY `id_item` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `id_item` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT de la tabla `personas_contacto`
@@ -320,13 +323,13 @@ ALTER TABLE `personas_contacto`
 -- AUTO_INCREMENT de la tabla `productos`
 --
 ALTER TABLE `productos`
-  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `remisiones`
 --
 ALTER TABLE `remisiones`
-  MODIFY `id_remision` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id_remision` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
@@ -356,7 +359,7 @@ ALTER TABLE `personas_contacto`
 --
 ALTER TABLE `remisiones`
   ADD CONSTRAINT `remisiones_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `clientes` (`id_cliente`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `remisiones_ibfk_2` FOREIGN KEY (`id_persona`) REFERENCES `personas_contacto` (`id_persona`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `remisiones_ibfk_2` FOREIGN KEY (`id_persona`) REFERENCES `personas_contacto` (`id_persona`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `remisiones_ibfk_3` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `remisiones_ibfk_4` FOREIGN KEY (`id_estado`) REFERENCES `estados` (`id_estado`) ON UPDATE CASCADE;
 COMMIT;

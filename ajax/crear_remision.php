@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $remision->id_persona      = !empty($_POST['id_persona']) ? (int) $_POST['id_persona'] : null;
         $remision->id_usuario      = 1; // Usuario fijo por ahora
         $remision->observaciones   = $_POST['observaciones'] ?? null;
-        $remision->id_estado       = 1; // Estado inicial
+        $remision->id_estado       = !empty($_POST['id_estado']) ? (int) $_POST['id_estado'] : 1; // Estado inicial: Pendiente
 
         // Debug interno
         error_log("Datos recibidos en crear_remision.php: " . print_r($_POST, true));

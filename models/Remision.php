@@ -91,9 +91,13 @@ class Remision {
     }
 
     public function buscarRemisiones($termino = '', $fecha_inicio = '', $fecha_fin = '') {
-        $query = "SELECT r.*, c.nombre_cliente, e.nombre_estado 
+        $query = "SELECT r.*, 
+                         c.nombre_cliente, c.nit, c.telefono,
+                         pc.nombre_persona, pc.telefono AS telefono_persona,
+                         e.nombre_estado 
                   FROM " . $this->table_name . " r
                   LEFT JOIN clientes c ON r.id_cliente = c.id_cliente
+                  LEFT JOIN personas_contacto pc ON r.id_persona = pc.id_persona
                   LEFT JOIN estados e ON r.id_estado = e.id_estado
                   WHERE 1=1";
         
@@ -127,8 +131,10 @@ class Remision {
     }
 
     public function obtenerPorId($id) {
-        $query = "SELECT r.*, c.nombre_cliente, c.nit, c.direccion, c.telefono,
-                         pc.nombre_persona, e.nombre_estado
+        $query = "SELECT r.*, 
+                         c.nombre_cliente, c.nit, c.direccion, c.telefono,
+                         pc.nombre_persona, pc.telefono AS telefono_persona, pc.cargo AS cargo_persona,
+                         e.nombre_estado
                   FROM " . $this->table_name . " r
                   LEFT JOIN clientes c ON r.id_cliente = c.id_cliente
                   LEFT JOIN personas_contacto pc ON r.id_persona = pc.id_persona

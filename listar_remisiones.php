@@ -117,8 +117,8 @@ include 'views/layout/header.php';
                                                 </td>
                                                 <td><?php echo htmlspecialchars($rem['nombre_cliente'] ?? 'N/A'); ?></td>
                                                 <td><?php echo htmlspecialchars($rem['nit'] ?? 'N/A'); ?></td>
-                                                <td><?php echo htmlspecialchars($rem['nombre_persona'] ?? 'N/A'); ?></td>
-                                                <td><?php echo htmlspecialchars($rem['telefono'] ?? 'N/A'); ?></td>
+                                                <td><?php echo htmlspecialchars($rem['nombre_persona'] ?? '-'); ?></td>
+                                                <td><?php echo htmlspecialchars($rem['telefono_persona'] ?? '-'); ?></td>
                                                 <td>
                                                     <div class="btn-group" role="group">
                                                         <button type="button" class="btn btn-info btn-sm" 

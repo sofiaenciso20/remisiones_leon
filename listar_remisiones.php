@@ -16,12 +16,14 @@ $fecha_fin = $_GET['fecha_fin'] ?? '';
 $pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
 $por_pagina = 10;
 
-$stmt = $remision->buscarRemisiones($termino, $fecha_inicio, $fecha_fin);
-$remisiones = $stmt->fetchAll(PDO::FETCH_ASSOC);
-$total = count($remisiones);
-
-$total_remisiones = $remision->contarRemisiones($termino);
+// Obtener el total de remisiones para la paginación
+$total_remisiones = $remision->contarRemisiones($termino, $fecha_inicio, $fecha_fin);
 $total_paginas = ceil($total_remisiones / $por_pagina);
+$offset = ($pagina - 1) * $por_pagina;
+
+// Obtener remisiones con paginación y ordenadas por ID de menor a mayor
+$stmt = $remision->obtenerRemisionesPaginadas($termino, $fecha_inicio, $fecha_fin, $offset, $por_pagina);
+$remisiones = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 include 'views/layout/header.php';
 ?>
@@ -80,6 +82,7 @@ include 'views/layout/header.php';
                             <div class="col-md-6 text-right">
                                 <small class="text-muted">
                                     Mostrando <?php echo count($remisiones); ?> de <?php echo $total_remisiones; ?> remisiones
+                                    (Página <?php echo $pagina; ?> de <?php echo $total_paginas; ?>)
                                 </small>
                             </div>
                         </div>
@@ -117,8 +120,8 @@ include 'views/layout/header.php';
                                                 </td>
                                                 <td><?php echo htmlspecialchars($rem['nombre_cliente'] ?? 'N/A'); ?></td>
                                                 <td><?php echo htmlspecialchars($rem['nit'] ?? 'N/A'); ?></td>
-                                                <td><?php echo htmlspecialchars($rem['nombre_persona'] ?? 'N/A'); ?></td>
-                                                <td><?php echo htmlspecialchars($rem['telefono'] ?? 'N/A'); ?></td>
+                                                <td><?php echo htmlspecialchars($rem['nombre_persona'] ?? '-'); ?></td>
+                                                <td><?php echo htmlspecialchars($rem['telefono_persona'] ?? '-'); ?></td>
                                                 <td>
                                                     <div class="btn-group" role="group">
                                                         <button type="button" class="btn btn-info btn-sm" 
@@ -142,31 +145,55 @@ include 'views/layout/header.php';
                         <?php if ($total_paginas > 1): ?>
                             <nav aria-label="Paginación">
                                 <ul class="pagination justify-content-center">
+                                    <!-- Botón Anterior -->
                                     <?php if ($pagina > 1): ?>
                                         <li class="page-item">
-                                            <a class="page-link" href="?pagina=<?php echo $pagina - 1; ?>&buscar=<?php echo urlencode($termino); ?>">
-                                                <i class="fas fa-chevron-left"></i>
+                                            <a class="page-link" href="?pagina=<?php echo $pagina - 1; ?>&buscar=<?php echo urlencode($termino); ?>&fecha_inicio=<?php echo urlencode($fecha_inicio); ?>&fecha_fin=<?php echo urlencode($fecha_fin); ?>">
+                                                <i class="fas fa-chevron-left"></i> Anterior
                                             </a>
+                                        </li>
+                                    <?php else: ?>
+                                        <li class="page-item disabled">
+                                            <span class="page-link"><i class="fas fa-chevron-left"></i> Anterior</span>
                                         </li>
                                     <?php endif; ?>
 
-                                    <?php for ($i = 1; $i <= $total_paginas; $i++): ?>
+                                    <!-- Números de página -->
+                                    <?php 
+                                    $inicio = max(1, $pagina - 2);
+                                    $fin = min($total_paginas, $pagina + 2);
+                                    
+                                    for ($i = $inicio; $i <= $fin; $i++): 
+                                    ?>
                                         <li class="page-item <?php echo $i == $pagina ? 'active' : ''; ?>">
-                                            <a class="page-link" href="?pagina=<?php echo $i; ?>&buscar=<?php echo urlencode($termino); ?>">
+                                            <a class="page-link" href="?pagina=<?php echo $i; ?>&buscar=<?php echo urlencode($termino); ?>&fecha_inicio=<?php echo urlencode($fecha_inicio); ?>&fecha_fin=<?php echo urlencode($fecha_fin); ?>">
                                                 <?php echo $i; ?>
                                             </a>
                                         </li>
                                     <?php endfor; ?>
 
+                                    <!-- Botón Siguiente -->
                                     <?php if ($pagina < $total_paginas): ?>
                                         <li class="page-item">
-                                            <a class="page-link" href="?pagina=<?php echo $pagina + 1; ?>&buscar=<?php echo urlencode($termino); ?>">
-                                                <i class="fas fa-chevron-right"></i>
+                                            <a class="page-link" href="?pagina=<?php echo $pagina + 1; ?>&buscar=<?php echo urlencode($termino); ?>&fecha_inicio=<?php echo urlencode($fecha_inicio); ?>&fecha_fin=<?php echo urlencode($fecha_fin); ?>">
+                                                Siguiente <i class="fas fa-chevron-right"></i>
                                             </a>
+                                        </li>
+                                    <?php else: ?>
+                                        <li class="page-item disabled">
+                                            <span class="page-link">Siguiente <i class="fas fa-chevron-right"></i></span>
                                         </li>
                                     <?php endif; ?>
                                 </ul>
                             </nav>
+                            
+                            <!-- Información de la página -->
+                            <div class="text-center text-muted">
+                                <small>
+                                    Página <?php echo $pagina; ?> de <?php echo $total_paginas; ?> 
+                                    | Total de remisiones: <?php echo $total_remisiones; ?>
+                                </small>
+                            </div>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -220,6 +247,10 @@ include 'views/layout/header.php';
 .detalles-remision .col-md-6 {
     margin-bottom: 10px;
 }
+
+.pagination {
+    margin-bottom: 0;
+}
 </style>
 
 <script>
@@ -241,6 +272,13 @@ function verRemision(id) {
             Swal.fire('Error', 'Error al cargar los detalles de la remisión', 'error');
         }
     });
+}
+
+// Función para cargar una página específica
+function cargarPagina(pagina) {
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('pagina', pagina);
+    window.location.href = '?' + urlParams.toString();
 }
 </script>
 

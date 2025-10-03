@@ -34,6 +34,15 @@ class Cliente {
         VALUES (:nombre_cliente, :tipo_cliente, :nit, :direccion, :telefono, :correo)";
         
         $stmt = $this->conn->prepare($query);
+        
+        // Limpiar datos
+        $this->nombre_cliente = htmlspecialchars(strip_tags($this->nombre_cliente));
+        $this->tipo_cliente = htmlspecialchars(strip_tags($this->tipo_cliente));
+        $this->nit = htmlspecialchars(strip_tags($this->nit));
+        $this->direccion = $this->direccion ? htmlspecialchars(strip_tags($this->direccion)) : null;
+        $this->telefono = $this->telefono ? htmlspecialchars(strip_tags($this->telefono)) : null;
+        $this->correo = $this->correo ? htmlspecialchars(strip_tags($this->correo)) : null;
+        
         $stmt->bindParam(':nombre_cliente', $this->nombre_cliente);
         $stmt->bindParam(':tipo_cliente', $this->tipo_cliente);
         $stmt->bindParam(':nit', $this->nit);
@@ -86,7 +95,7 @@ class Cliente {
             $this->direccion = $row['direccion'];
             $this->telefono = $row['telefono'];
             $this->correo = $row['correo'];
-            return $row;
+            return $row; // Retorna el array con los datos
         }
         return false;
     }
@@ -97,6 +106,65 @@ class Cliente {
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row['total'];
+    }
+
+    // Método adicional: actualizar cliente
+    public function actualizar() {
+        $query = "UPDATE " . $this->table_name . " 
+                  SET nombre_cliente = :nombre_cliente, 
+                      tipo_cliente = :tipo_cliente, 
+                      nit = :nit, 
+                      direccion = :direccion, 
+                      telefono = :telefono, 
+                      correo = :correo
+                  WHERE id_cliente = :id_cliente";
+        
+        $stmt = $this->conn->prepare($query);
+        
+        // Limpiar datos
+        $this->nombre_cliente = htmlspecialchars(strip_tags($this->nombre_cliente));
+        $this->tipo_cliente = htmlspecialchars(strip_tags($this->tipo_cliente));
+        $this->nit = htmlspecialchars(strip_tags($this->nit));
+        $this->direccion = $this->direccion ? htmlspecialchars(strip_tags($this->direccion)) : null;
+        $this->telefono = $this->telefono ? htmlspecialchars(strip_tags($this->telefono)) : null;
+        $this->correo = $this->correo ? htmlspecialchars(strip_tags($this->correo)) : null;
+        $this->id_cliente = htmlspecialchars(strip_tags($this->id_cliente));
+        
+        $stmt->bindParam(':nombre_cliente', $this->nombre_cliente);
+        $stmt->bindParam(':tipo_cliente', $this->tipo_cliente);
+        $stmt->bindParam(':nit', $this->nit);
+        $stmt->bindParam(':direccion', $this->direccion);
+        $stmt->bindParam(':telefono', $this->telefono);
+        $stmt->bindParam(':correo', $this->correo);
+        $stmt->bindParam(':id_cliente', $this->id_cliente);
+        
+        // Ejecutar y verificar
+        if ($stmt->execute()) {
+            // Verificar si se afectó alguna fila
+            if ($stmt->rowCount() > 0) {
+                return true;
+            } else {
+                // No se afectó ninguna fila, posiblemente los datos son iguales
+                return true;
+            }
+        }
+        
+        // Log del error si hay problemas
+        error_log("Error en actualizar Cliente: " . implode(", ", $stmt->errorInfo()));
+        return false;
+    }
+
+    // Método adicional: eliminar cliente
+    public function eliminar() {
+        $query = "DELETE FROM " . $this->table_name . " WHERE id_cliente = ?";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(1, $this->id_cliente);
+        
+        if($stmt->execute()) {
+            return true;
+        }
+        return false;
     }
 }
 ?>

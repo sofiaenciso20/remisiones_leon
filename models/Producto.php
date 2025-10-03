@@ -1,4 +1,7 @@
 <?php
+// models/Producto.php
+require_once __DIR__ . '/../config/database.php';
+
 class Producto {
     private $conn;
     private $table_name = "productos";
@@ -12,6 +15,16 @@ class Producto {
     }
 
     public function crear() {
+        // Verificar si el producto ya existe
+        $query_check = "SELECT id_producto FROM " . $this->table_name . " WHERE nombre_producto = :nombre_producto";
+        $stmt_check = $this->conn->prepare($query_check);
+        $stmt_check->bindParam(':nombre_producto', $this->nombre_producto);
+        $stmt_check->execute();
+        
+        if ($stmt_check->rowCount() > 0) {
+            throw new Exception("El producto ya existe en la base de datos");
+        }
+        
         $query = "INSERT INTO " . $this->table_name . " 
                  SET nombre_producto = :nombre_producto";
         

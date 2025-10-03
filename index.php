@@ -585,7 +585,6 @@ $(document).ready(function() {
             data: $(this).serialize(),
             dataType: 'json',
             success: function(response) {
-                console.log('[v0] Respuesta crear persona:', response);
                 if (response.success) {
                     $('#modalPersonaContacto').modal('hide');
                     $('#formPersonaContacto')[0].reset();
@@ -599,7 +598,7 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr, status, error) {
-                console.log('[v0] Error AJAX crear persona:', xhr.responseText);
+                console.error("Error al crear persona de contacto:", error);
                 Swal.fire('Error', 'Error al crear la persona de contacto', 'error');
             }
         });
@@ -615,7 +614,6 @@ $(document).ready(function() {
             data: $(this).serialize(),
             dataType: 'json',
             success: function(response) {
-                console.log('[v0] Respuesta crear producto:', response);
                 if (response.success) {
                     $('#modalProducto').modal('hide');
                     $('#formProducto')[0].reset();
@@ -640,7 +638,7 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr, status, error) {
-                console.log('[v0] Error AJAX crear producto:', xhr.responseText);
+                console.error("Error al crear producto:", error);
                 Swal.fire('Error', 'Error al crear el producto', 'error');
             }
         });
@@ -794,54 +792,41 @@ function limpiarFormulario() {
 }
 
 function cargarPersonasContacto(clienteId) {
-    console.log('[v0] Cargando personas de contacto para cliente:', clienteId);
-    
     $.ajax({
         url: 'ajax/obtener_personas_contacto.php',
         method: 'POST',
         data: { id_cliente: clienteId },
         dataType: 'json',
-        success: function(response) {
-            console.log('[v0] Respuesta completa:', response);
+        success: function(personas) {
             $('#persona_contacto').empty().append('<option value="">Seleccione...</option>');
             
-            if (response.success && response.data && response.data.length > 0) {
-                response.data.forEach(function(persona) {
-                    console.log('[v0] Agregando persona:', persona);
+            if (Array.isArray(personas) && personas.length > 0) {
+                personas.forEach(function(persona) {
                     $('#persona_contacto').append(`<option value="${persona.id_persona}">${persona.nombre_persona}</option>`);
                 });
-            } else {
-                console.log('[v0] No se encontraron personas de contacto');
             }
         },
         error: function(xhr, status, error) {
-            console.log('[v0] Error al cargar personas:', error);
-            console.log('[v0] Respuesta del servidor:', xhr.responseText);
+            console.error("Error al cargar personas de contacto:", error);
             $('#persona_contacto').empty().append('<option value="">Seleccione...</option>');
         }
     });
 }
 
 function cargarSiguienteNumero() {
-    console.log('[v0] Cargando siguiente número de remisión...');
-    
     $.ajax({
         url: 'ajax/obtener_siguiente_numero.php',
         method: 'GET',
         dataType: 'json',
         success: function(response) {
-            console.log('[v0] Respuesta número remisión:', response);
             if (response.success) {
                 $('#numero_remision').val(response.siguiente_numero);
-                console.log('[v0] Número de remisión cargado:', response.siguiente_numero);
             } else {
-                console.log('[v0] Error al obtener número:', response.message);
                 $('#numero_remision').val(1);
             }
         },
         error: function(xhr, status, error) {
-            console.log('[v0] Error AJAX obtener número:', error);
-            console.log('[v0] Respuesta del servidor:', xhr.responseText);
+            console.error("Error al obtener siguiente número:", error);
             $('#numero_remision').val(1);
         }
     });

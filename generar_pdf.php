@@ -4,21 +4,34 @@ require_once __DIR__ . '/models/Remision.php';
 require_once __DIR__ . '/models/ItemRemisionado.php';
 require_once __DIR__ . '/lib/fpdf/fpdf.php';
 
-if (!isset($_GET['id'])) {
-    die('ID de remisión no especificado');
+// Validar parámetros requeridos
+if (!isset($_GET['id']) || empty($_GET['id'])) {
+    http_response_code(400);
+    die('<h1>Error</h1><p>ID de remisión no especificado</p>');
 }
 
-$database = new Database();
-$db = $database->getConnection();
-
-$remision = new Remision($db);
-$itemRemisionado = new ItemRemisionado($db);
-
-$datos = $remision->obtenerPorId($_GET['id']);
-$items = $itemRemisionado->obtenerPorRemision($_GET['id']);
-
-if (!$datos) {
-    die('Remisión no encontrada');
+try {
+    $database = new Database();
+    $db = $database->getConnection();
+    
+    if (!$db) {
+        throw new Exception('Error de conexión a la base de datos');
+    }
+    
+    $remision = new Remision($db);
+    $itemRemisionado = new ItemRemisionado($db);
+    
+    $datos = $remision->obtenerPorId($_GET['id']);
+    $items = $itemRemisionado->obtenerPorRemision($_GET['id']);
+    
+    if (!$datos) {
+        http_response_code(404);
+        die('<h1>Error</h1><p>Remisión no encontrada</p>');
+    }
+} catch (Exception $e) {
+    error_log("Error al generar PDF: " . $e->getMessage());
+    http_response_code(500);
+    die('<h1>Error</h1><p>Error al generar el PDF: ' . htmlspecialchars($e->getMessage()) . '</p>');
 }
 
 class RemisionPDF extends FPDF {
@@ -75,14 +88,14 @@ class RemisionPDF extends FPDF {
         $this->Cell(0, 4, utf8_decode($this->datos['nit']), 0, 1);
 
         // Información de persona de contacto (RECIBE)
-        if (!empty($this->datos['nombre_persona'])) {
+    if (!empty($this->datos['nombre_persona'])) {
             $this->SetX($x + 3);
             $this->SetFont('Arial', 'B', 9);
             $this->Cell(15, 4, utf8_decode('RECIBE: '), 0, 0);
             $this->SetFont('Arial', '', 9);
             
-            // CORREGIR: usar telefono_persona en lugar de telefono
-            $telefono_persona = isset($this->datos['telefono']) ? $this->datos['telefono'] : '';
+            // Usar telefono_persona (no el teléfono del cliente)
+            $telefono_persona = isset($this->datos['telefono_persona']) ? $this->datos['telefono_persona'] : '';
             $recibe_info = $this->datos['nombre_persona'];
             if (!empty($telefono_persona)) {
                 $recibe_info .= ' - Tel: ' . $telefono_persona;

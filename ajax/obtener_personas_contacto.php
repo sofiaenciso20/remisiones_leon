@@ -6,8 +6,6 @@ header('Content-Type: application/json');
 
 if (isset($_POST['id_cliente'])) {
     try {
-        error_log("[DEBUG] Obteniendo personas para cliente: " . $_POST['id_cliente']);
-        
         $database = new Database();
         $db = $database->getConnection();
         
@@ -18,25 +16,13 @@ if (isset($_POST['id_cliente'])) {
         $personaContacto = new PersonaContacto($db);
         $personas = $personaContacto->obtenerPorCliente($_POST['id_cliente']);
         
-        error_log("[DEBUG] Personas encontradas: " . count($personas));
-        
-        echo json_encode([
-            'success' => true,
-            'data' => $personas
-        ]);
+        // Retornar array directo como esperan los otros endpoints del proyecto
+        echo json_encode($personas);
     } catch (Exception $e) {
-        error_log("[ERROR] Error al obtener personas: " . $e->getMessage());
-        echo json_encode([
-            'success' => false,
-            'error' => $e->getMessage(),
-            'data' => []
-        ]);
+        error_log("Error al obtener personas de contacto: " . $e->getMessage());
+        echo json_encode([]);
     }
 } else {
-    echo json_encode([
-        'success' => false,
-        'error' => 'ID de cliente no proporcionado',
-        'data' => []
-    ]);
+    echo json_encode([]);
 }
 ?>

@@ -35,9 +35,9 @@ class PersonaContacto {
         
         // Limpiar datos
         $this->nombre_persona = htmlspecialchars(strip_tags($this->nombre_persona));
-        $this->cargo = htmlspecialchars(strip_tags($this->cargo));
-        $this->telefono = htmlspecialchars(strip_tags($this->telefono));
-        $this->correo = htmlspecialchars(strip_tags($this->correo));
+        $this->cargo = $this->cargo ? htmlspecialchars(strip_tags($this->cargo)) : null;
+        $this->telefono = $this->telefono ? htmlspecialchars(strip_tags($this->telefono)) : null;
+        $this->correo = $this->correo ? htmlspecialchars(strip_tags($this->correo)) : null;
         $this->id_cliente = htmlspecialchars(strip_tags($this->id_cliente));
         
         // Vincular valores
@@ -50,6 +50,9 @@ class PersonaContacto {
         if($stmt->execute()) {
             return $this->conn->lastInsertId();
         }
+        
+        // Log del error si hay problemas
+        error_log("Error en crear PersonaContacto: " . implode(", ", $stmt->errorInfo()));
         return false;
     }
 
@@ -97,20 +100,23 @@ class PersonaContacto {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    // Método adicional: actualizar persona de contacto
+    // Método adicional: actualizar persona de contacto - VERSIÓN CORREGIDA
     public function actualizar() {
         $query = "UPDATE " . $this->table_name . " 
-                  SET nombre_persona = :nombre_persona, cargo = :cargo, 
-                      telefono = :telefono, correo = :correo, id_cliente = :id_cliente
+                  SET nombre_persona = :nombre_persona, 
+                      cargo = :cargo, 
+                      telefono = :telefono, 
+                      correo = :correo, 
+                      id_cliente = :id_cliente 
                   WHERE id_persona = :id_persona";
         
         $stmt = $this->conn->prepare($query);
         
         // Limpiar datos
         $this->nombre_persona = htmlspecialchars(strip_tags($this->nombre_persona));
-        $this->cargo = htmlspecialchars(strip_tags($this->cargo));
-        $this->telefono = htmlspecialchars(strip_tags($this->telefono));
-        $this->correo = htmlspecialchars(strip_tags($this->correo));
+        $this->cargo = $this->cargo ? htmlspecialchars(strip_tags($this->cargo)) : null;
+        $this->telefono = $this->telefono ? htmlspecialchars(strip_tags($this->telefono)) : null;
+        $this->correo = $this->correo ? htmlspecialchars(strip_tags($this->correo)) : null;
         $this->id_cliente = htmlspecialchars(strip_tags($this->id_cliente));
         $this->id_persona = htmlspecialchars(strip_tags($this->id_persona));
         
@@ -122,9 +128,19 @@ class PersonaContacto {
         $stmt->bindParam(":id_cliente", $this->id_cliente);
         $stmt->bindParam(":id_persona", $this->id_persona);
         
-        if($stmt->execute()) {
-            return true;
+        // Ejecutar y verificar
+        if ($stmt->execute()) {
+            // Verificar si se afectó alguna fila
+            if ($stmt->rowCount() > 0) {
+                return true;
+            } else {
+                // No se afectó ninguna fila, posiblemente los datos son iguales
+                return true; // O puedes retornar false si quieres considerarlo error
+            }
         }
+        
+        // Log del error si hay problemas
+        error_log("Error en actualizar PersonaContacto: " . implode(", ", $stmt->errorInfo()));
         return false;
     }
 
@@ -138,7 +154,31 @@ class PersonaContacto {
         if($stmt->execute()) {
             return true;
         }
+        
+        // Log del error si hay problemas
+        error_log("Error en eliminar PersonaContacto: " . implode(", ", $stmt->errorInfo()));
         return false;
+    }
+
+    // Método adicional: verificar si existe la persona de contacto
+    public function existe($id) {
+        $query = "SELECT id_persona FROM " . $this->table_name . " WHERE id_persona = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":id", $id);
+        $stmt->execute();
+        
+        return $stmt->rowCount() > 0;
+    }
+
+    // Método adicional: obtener personas con información del cliente
+    public function obtenerTodosConCliente() {
+        $query = "SELECT pc.*, c.nombre_cliente 
+                  FROM " . $this->table_name . " pc 
+                  LEFT JOIN clientes c ON pc.id_cliente = c.id_cliente 
+                  ORDER BY pc.nombre_persona";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt;
     }
 }
 ?>

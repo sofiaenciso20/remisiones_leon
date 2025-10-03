@@ -60,7 +60,7 @@ class Remision {
         return $ultimo_numero + 1;
     }
     
-    public function contarRemisiones($termino = '') {
+    public function contarRemisiones($termino = '', $fecha_inicio = '', $fecha_fin = '') {
         try {
             $query = "SELECT COUNT(*) as total FROM " . $this->table_name . " r
                       LEFT JOIN clientes c ON r.id_cliente = c.id_cliente
@@ -71,6 +71,16 @@ class Remision {
             if (!empty($termino)) {
                 $query .= " AND (r.numero_remision LIKE :termino OR c.nombre_cliente LIKE :termino OR c.nit LIKE :termino)";
                 $params[':termino'] = '%' . $termino . '%';
+            }
+
+            if (!empty($fecha_inicio)) {
+                $query .= " AND r.fecha_emision >= :fecha_inicio";
+                $params[':fecha_inicio'] = $fecha_inicio;
+            }
+            
+            if (!empty($fecha_fin)) {
+                $query .= " AND r.fecha_emision <= :fecha_fin";
+                $params[':fecha_fin'] = $fecha_fin;
             }
             
             $stmt = $this->conn->prepare($query);
@@ -90,10 +100,54 @@ class Remision {
         }
     }
 
+    public function obtenerRemisionesPaginadas($termino = '', $fecha_inicio = '', $fecha_fin = '', $offset = 0, $limit = 10) {
+        $query = "SELECT r.*, c.nombre_cliente, c.nit, p.nombre_persona, p.telefono as telefono_persona 
+                  FROM " . $this->table_name . " r 
+                  LEFT JOIN clientes c ON r.id_cliente = c.id_cliente 
+                  LEFT JOIN personas_contacto p ON r.id_persona = p.id_persona 
+                  WHERE 1=1";
+        
+        $params = [];
+        
+        if (!empty($termino)) {
+            $query .= " AND (r.numero_remision LIKE :termino OR c.nombre_cliente LIKE :termino)";
+            $params[':termino'] = "%$termino%";
+        }
+        
+        if (!empty($fecha_inicio)) {
+            $query .= " AND r.fecha_emision >= :fecha_inicio";
+            $params[':fecha_inicio'] = $fecha_inicio;
+        }
+        
+        if (!empty($fecha_fin)) {
+            $query .= " AND r.fecha_emision <= :fecha_fin";
+            $params[':fecha_fin'] = $fecha_fin;
+        }
+        
+        $query .= " ORDER BY r.id_remision ASC LIMIT :limit OFFSET :offset";
+        
+        $stmt = $this->conn->prepare($query);
+        
+        foreach ($params as $key => &$val) {
+            $stmt->bindParam($key, $val);
+        }
+        
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        
+        $stmt->execute();
+        
+        return $stmt;
+    }
+
     public function buscarRemisiones($termino = '', $fecha_inicio = '', $fecha_fin = '') {
-        $query = "SELECT r.*, c.nombre_cliente, e.nombre_estado 
+        $query = "SELECT r.*, 
+                         c.nombre_cliente, c.nit, c.telefono,
+                         pc.nombre_persona, pc.telefono AS telefono_persona,
+                         e.nombre_estado 
                   FROM " . $this->table_name . " r
                   LEFT JOIN clientes c ON r.id_cliente = c.id_cliente
+                  LEFT JOIN personas_contacto pc ON r.id_persona = pc.id_persona
                   LEFT JOIN estados e ON r.id_estado = e.id_estado
                   WHERE 1=1";
         
@@ -127,8 +181,10 @@ class Remision {
     }
 
     public function obtenerPorId($id) {
-        $query = "SELECT r.*, c.nombre_cliente, c.nit, c.direccion, c.telefono,
-                         pc.nombre_persona, e.nombre_estado
+        $query = "SELECT r.*, 
+                         c.nombre_cliente, c.nit, c.direccion, c.telefono,
+                         pc.nombre_persona, pc.telefono AS telefono_persona, pc.cargo AS cargo_persona,
+                         e.nombre_estado
                   FROM " . $this->table_name . " r
                   LEFT JOIN clientes c ON r.id_cliente = c.id_cliente
                   LEFT JOIN personas_contacto pc ON r.id_persona = pc.id_persona

@@ -5,6 +5,19 @@ require_once 'models/Remision.php';
 require_once 'models/PersonaContacto.php';
 require_once 'models/Producto.php';
 
+// Manejar acciones
+$action = $_GET['action'] ?? 'nueva_remision';
+
+switch ($action) {
+    case 'inventario':
+        include 'views/inventario.php';
+        exit;
+    case 'nueva_remision':
+    default:
+        // Continuar con el código existente para nueva remisión
+        break;
+}
+
 // Crear conexión a la base de datos
 $database = new Database();
 $db = $database->getConnection();

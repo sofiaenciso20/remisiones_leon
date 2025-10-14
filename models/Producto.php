@@ -9,9 +9,28 @@ class Producto {
     public $id_producto;
     public $nombre_producto;
     public $fecha_creacion;
+    public $maneja_inventario;
+    public $stock_actual;
+    public $stock_minimo;
 
     public function __construct($db) {
         $this->conn = $db;
+    }
+
+    // Obtener todos los productos
+    public function obtenerTodos() {
+        $query = "SELECT * FROM " . $this->table_name . " ORDER BY nombre_producto";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Obtener producto por ID
+    public function obtenerPorId($id) {
+        $query = "SELECT * FROM " . $this->table_name . " WHERE id_producto = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute([$id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     public function crear() {
@@ -26,10 +45,16 @@ class Producto {
         }
         
         $query = "INSERT INTO " . $this->table_name . " 
-                 SET nombre_producto = :nombre_producto";
+                 SET nombre_producto = :nombre_producto,
+                     maneja_inventario = :maneja_inventario,
+                     stock_actual = :stock_actual,
+                     stock_minimo = :stock_minimo";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":nombre_producto", $this->nombre_producto);
+        $stmt->bindParam(":maneja_inventario", $this->maneja_inventario);
+        $stmt->bindParam(":stock_actual", $this->stock_actual);
+        $stmt->bindParam(":stock_minimo", $this->stock_minimo);
         
         if ($stmt->execute()) {
             $this->id_producto = $this->conn->lastInsertId();
@@ -38,8 +63,21 @@ class Producto {
         return false;
     }
 
+    // Actualizar stock
+    public function actualizarStock($id_producto, $nuevo_stock) {
+        $query = "UPDATE " . $this->table_name . " 
+                  SET stock_actual = :stock_actual 
+                  WHERE id_producto = :id_producto";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":stock_actual", $nuevo_stock);
+        $stmt->bindParam(":id_producto", $id_producto);
+        return $stmt->execute();
+    }
+
+    // Buscar productos
     public function buscar($termino = "") {
-        $query = "SELECT id_producto as id, nombre_producto as text 
+        $query = "SELECT id_producto as id, nombre_producto as text, 
+                         maneja_inventario, stock_actual, stock_minimo
                  FROM " . $this->table_name . " 
                  WHERE nombre_producto LIKE :termino 
                  ORDER BY nombre_producto 
@@ -50,6 +88,53 @@ class Producto {
         $stmt->bindParam(":termino", $termino);
         $stmt->execute();
         
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Actualizar información del producto
+    public function actualizar() {
+        $query = "UPDATE " . $this->table_name . " 
+                 SET nombre_producto = :nombre_producto,
+                     maneja_inventario = :maneja_inventario,
+                     stock_actual = :stock_actual,
+                     stock_minimo = :stock_minimo
+                 WHERE id_producto = :id_producto";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":nombre_producto", $this->nombre_producto);
+        $stmt->bindParam(":maneja_inventario", $this->maneja_inventario);
+        $stmt->bindParam(":stock_actual", $this->stock_actual);
+        $stmt->bindParam(":stock_minimo", $this->stock_minimo);
+        $stmt->bindParam(":id_producto", $this->id_producto);
+        
+        return $stmt->execute();
+    }
+
+    // Eliminar producto
+    public function eliminar($id_producto) {
+        $query = "DELETE FROM " . $this->table_name . " WHERE id_producto = :id_producto";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":id_producto", $id_producto);
+        return $stmt->execute();
+    }
+
+    // Obtener productos con bajo stock
+    public function obtenerBajoStock() {
+        $query = "SELECT * FROM " . $this->table_name . " 
+                  WHERE maneja_inventario = 1 AND stock_actual <= stock_minimo 
+                  ORDER BY stock_actual ASC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Obtener productos que manejan inventario
+    public function obtenerConInventario() {
+        $query = "SELECT * FROM " . $this->table_name . " 
+                  WHERE maneja_inventario = 1 
+                  ORDER BY nombre_producto";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

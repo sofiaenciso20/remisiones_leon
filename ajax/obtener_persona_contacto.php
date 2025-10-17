@@ -24,7 +24,7 @@ try {
     $persona = $personaContacto->obtenerPorIdArray($id_persona);
 
     if ($persona) {
-        // Obtener el nombre del cliente asociado - USANDO EL MÉTODO CORREGIDO
+        // Obtener el nombre del cliente asociado
         $clienteData = $cliente->obtenerPorId($persona['id_cliente']);
         $nombre_cliente = '';
         
@@ -34,13 +34,21 @@ try {
             $nombre_cliente = 'Cliente no encontrado';
         }
 
-        // Agregar el nombre del cliente al array de la persona
-        $persona['nombre_cliente'] = $nombre_cliente;
-
-        // Devolver los datos en formato JSON
         echo json_encode([
             'success' => true,
-            'data' => $persona
+            'data' => [
+                'id_persona' => $persona['id_persona'],
+                'nombre_persona' => $persona['nombre_persona'],
+                'cargo' => $persona['cargo'] ?? '',
+                'telefono' => $persona['telefono'] ?? '',
+                'correo' => $persona['correo'] ?? '',
+                'id_cliente' => $persona['id_cliente'],
+                'nombre_cliente' => $nombre_cliente
+            ],
+            'persona' => [
+                'id_persona' => $persona['id_persona'],
+                'nombre_persona' => $persona['nombre_persona']
+            ]
         ]);
     } else {
         echo json_encode([

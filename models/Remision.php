@@ -60,10 +60,11 @@ class Remision {
         return $ultimo_numero + 1;
     }
     
-    public function contarRemisiones($termino = '', $fecha_inicio = '', $fecha_fin = '') {
+    public function contarRemisiones($termino = '', $fecha_inicio = '', $fecha_fin = '', $id_cliente = '', $id_persona = '') {
         try {
             $query = "SELECT COUNT(*) as total FROM " . $this->table_name . " r
                       LEFT JOIN clientes c ON r.id_cliente = c.id_cliente
+                      LEFT JOIN personas_contacto pc ON r.id_persona = pc.id_persona
                       WHERE 1=1";
             
             $params = array();
@@ -71,6 +72,16 @@ class Remision {
             if (!empty($termino)) {
                 $query .= " AND (r.numero_remision LIKE :termino OR c.nombre_cliente LIKE :termino OR c.nit LIKE :termino)";
                 $params[':termino'] = '%' . $termino . '%';
+            }
+
+            if (!empty($id_cliente)) {
+                $query .= " AND r.id_cliente = :id_cliente";
+                $params[':id_cliente'] = $id_cliente;
+            }
+
+            if (!empty($id_persona)) {
+                $query .= " AND r.id_persona = :id_persona";
+                $params[':id_persona'] = $id_persona;
             }
 
             if (!empty($fecha_inicio)) {
@@ -100,7 +111,7 @@ class Remision {
         }
     }
 
-    public function obtenerRemisionesPaginadas($termino = '', $fecha_inicio = '', $fecha_fin = '', $offset = 0, $limit = 10) {
+    public function obtenerRemisionesPaginadas($termino = '', $fecha_inicio = '', $fecha_fin = '', $offset = 0, $limit = 10, $id_cliente = '', $id_persona = '') {
         $query = "SELECT r.*, c.nombre_cliente, c.nit, p.nombre_persona, p.telefono as telefono_persona 
                   FROM " . $this->table_name . " r 
                   LEFT JOIN clientes c ON r.id_cliente = c.id_cliente 
@@ -110,8 +121,18 @@ class Remision {
         $params = [];
         
         if (!empty($termino)) {
-            $query .= " AND (r.numero_remision LIKE :termino OR c.nombre_cliente LIKE :termino)";
+            $query .= " AND (r.numero_remision LIKE :termino OR c.nombre_cliente LIKE :termino OR c.nit LIKE :termino)";
             $params[':termino'] = "%$termino%";
+        }
+
+        if (!empty($id_cliente)) {
+            $query .= " AND r.id_cliente = :id_cliente";
+            $params[':id_cliente'] = $id_cliente;
+        }
+
+        if (!empty($id_persona)) {
+            $query .= " AND r.id_persona = :id_persona";
+            $params[':id_persona'] = $id_persona;
         }
         
         if (!empty($fecha_inicio)) {

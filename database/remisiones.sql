@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 01-10-2025 a las 13:33:58
+-- Tiempo de generación: 17-10-2025 a las 22:11:08
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -86,40 +86,40 @@ CREATE TABLE `items_remisionados` (
 --
 
 INSERT INTO `items_remisionados` (`id_item`, `id_remision`, `id_producto`, `descripcion`, `cantidad`, `valor_unitario`) VALUES
-(2, 8, NULL, 'bolsas', 1, 0.00),
-(3, 9, NULL, 'QWQQEEEEE', 11, 0.00),
-(4, 9, NULL, 'DSDFFSDFDD', 10, 0.00),
-(5, 10, NULL, 'bolsas', 8, 0.00),
-(6, 10, NULL, 'jugos', 100, 0.00),
-(7, 11, NULL, 'bolsas', 1, 0.00),
-(8, 12, NULL, 'X', 1, 0.00),
-(9, 12, NULL, 'S', 1, 0.00),
-(10, 12, NULL, 'S', 1, 0.00),
-(11, 12, NULL, 'S', 1, 0.00),
-(12, 12, NULL, 'S', 1, 0.00),
-(13, 13, NULL, 'd', 1, 0.00),
-(14, 13, NULL, 'dd', 1, 0.00),
-(15, 13, NULL, 'dddd', 1, 0.00),
-(16, 13, NULL, 'ddddd', 1, 0.00),
-(17, 13, NULL, 'ddddd', 1, 0.00),
-(18, 13, NULL, 'ddddddd', 1, 0.00),
-(19, 13, NULL, 'dddddddd', 1, 0.00),
-(20, 13, NULL, 'ddddddddd', 1, 0.00),
-(21, 13, NULL, 'ddddddddd', 1, 0.00),
-(22, 13, NULL, 'dddddddddd', 1, 0.00),
-(23, 13, NULL, 'dddddddddd', 1, 0.00),
-(24, 13, NULL, 'ddddddd', 1, 0.00),
-(25, 13, NULL, 'dddddd', 1, 0.00),
-(26, 13, NULL, 'ddddddd', 1, 0.00),
-(27, 13, NULL, 'dddddddd', 1, 0.00),
-(28, 14, NULL, 'fvdfg', 2, 10000.00),
-(29, 14, NULL, 'fggfg', 6, 20000.00),
-(30, 15, NULL, 'bolsas de papel', 1, 100000.00),
-(31, 15, NULL, 'caja de carton ', 1, 22222.00),
-(32, 16, NULL, 'caja de carton ', 2, 2222.00),
-(33, 17, NULL, 'bolsas de papel', 100, 0.00),
-(34, 18, 1, 'bolsas de papel', 1, 0.00),
-(35, 19, 3, 'ROMAN SPIRIT – VOL. I', 1, 45000.00);
+(37, 21, 2, 'caja de carton ', 100, 5000.00),
+(38, 22, 3, 'ROMAN SPIRIT – VOL. I', 1, 0.00),
+(39, 22, 2, 'caja de carton ', 9, 0.00),
+(40, 23, 2, 'caja de carton ', 1, 0.00),
+(41, 24, 16, 'agua en botella', 1, 0.00);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `movimientos_inventario`
+--
+
+CREATE TABLE `movimientos_inventario` (
+  `id_movimiento` int(11) NOT NULL,
+  `id_producto` int(11) NOT NULL,
+  `tipo_movimiento` enum('entrada','salida') NOT NULL COMMENT 'entrada: devolución/compra, salida: remisión',
+  `cantidad` int(11) NOT NULL,
+  `stock_anterior` int(11) NOT NULL,
+  `stock_nuevo` int(11) NOT NULL,
+  `motivo` varchar(100) NOT NULL COMMENT 'remision, devolucion, compra, ajuste',
+  `id_remision` int(11) DEFAULT NULL COMMENT 'Si el movimiento está relacionado con una remisión',
+  `id_usuario` int(11) NOT NULL,
+  `observaciones` text DEFAULT NULL,
+  `fecha_movimiento` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `movimientos_inventario`
+--
+
+INSERT INTO `movimientos_inventario` (`id_movimiento`, `id_producto`, `tipo_movimiento`, `cantidad`, `stock_anterior`, `stock_nuevo`, `motivo`, `id_remision`, `id_usuario`, `observaciones`, `fecha_movimiento`) VALUES
+(1, 16, 'salida', 1, 40, 39, 'remision', 24, 1, 'Remisión #4', '2025-10-10 17:01:42'),
+(2, 15, 'entrada', 10, 100, 110, 'ajuste_manual', NULL, 1, 'compraron 10 pacas mas', '2025-10-16 16:32:07'),
+(3, 15, 'salida', 20, 110, 90, 'ajuste_manual', NULL, 1, 'sacaron 20 pacas de agua', '2025-10-16 16:32:26');
 
 -- --------------------------------------------------------
 
@@ -159,17 +159,39 @@ INSERT INTO `personas_contacto` (`id_persona`, `nombre_persona`, `cargo`, `telef
 CREATE TABLE `productos` (
   `id_producto` int(11) NOT NULL,
   `nombre_producto` varchar(200) NOT NULL,
-  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
+  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp(),
+  `maneja_inventario` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Indica si el producto maneja inventario',
+  `stock_actual` int(11) NOT NULL DEFAULT 0 COMMENT 'Cantidad actual en inventario',
+  `stock_minimo` int(11) NOT NULL DEFAULT 0 COMMENT 'Stock mínimo para alertas'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `productos`
 --
 
-INSERT INTO `productos` (`id_producto`, `nombre_producto`, `fecha_creacion`) VALUES
-(1, 'bolsas de papel', '2025-09-24 17:10:17'),
-(2, 'caja de carton ', '2025-09-24 17:10:40'),
-(3, 'ROMAN SPIRIT – VOL. I', '2025-10-01 13:31:45');
+INSERT INTO `productos` (`id_producto`, `nombre_producto`, `fecha_creacion`, `maneja_inventario`, `stock_actual`, `stock_minimo`) VALUES
+(1, 'bolsas de papel', '2025-09-24 17:10:17', 0, 100, 0),
+(2, 'caja de carton ', '2025-09-24 17:10:40', 0, 100, 0),
+(3, 'ROMAN SPIRIT – VOL. I', '2025-10-01 13:31:45', 0, 100, 0),
+(4, 'cafe', '2025-10-10 21:57:14', 1, 100, 10),
+(5, 'azucar', '2025-10-10 21:57:14', 1, 50, 20),
+(6, 'aromaticas', '2025-10-10 21:57:14', 1, 10, 15),
+(7, 'bolsas de basura', '2025-10-10 21:57:14', 1, 40, 30),
+(8, 'servilletas', '2025-10-10 21:57:14', 1, 100, 50),
+(9, 'bizcochos', '2025-10-10 21:57:14', 1, 100, 25),
+(10, 'galletas', '2025-10-10 21:57:14', 1, 100, 30),
+(11, 'melcochas', '2025-10-10 21:57:14', 1, 1000, 40),
+(12, 'bolsas de refrigerio', '2025-10-10 21:57:14', 1, 100, 100),
+(13, 'cajas de refrigerio', '2025-10-10 21:57:14', 1, 100, 50),
+(14, 'jugo en caja', '2025-10-10 21:57:14', 1, 100, 40),
+(15, 'agua en bolsa', '2025-10-10 21:57:14', 1, 90, 60),
+(16, 'agua en botella', '2025-10-10 21:57:14', 1, 39, 80),
+(17, 'camisas amarillas', '2025-10-10 21:57:14', 1, 70, 25),
+(18, 'camisas negras', '2025-10-10 21:57:14', 1, 42, 25),
+(19, 'busos logistica', '2025-10-10 21:57:14', 1, 10, 20),
+(20, 'busos aseo', '2025-10-10 21:57:14', 1, 100, 20),
+(21, 'camisa manga larga', '2025-10-10 21:57:14', 1, 100, 15),
+(22, 'jeans', '2025-10-10 21:57:14', 1, 10, 30);
 
 -- --------------------------------------------------------
 
@@ -193,25 +215,10 @@ CREATE TABLE `remisiones` (
 --
 
 INSERT INTO `remisiones` (`id_remision`, `numero_remision`, `fecha_emision`, `id_cliente`, `id_persona`, `id_usuario`, `observaciones`, `id_estado`) VALUES
-(1, 1, '2025-09-18 14:08:18', 1, 1, 1, 'aasfghjkkllll', 1),
-(2, 2, '2025-09-22 00:00:00', 3, 6, 1, 'wdssfsdfd', 1),
-(3, 3, '2025-09-22 00:00:00', 1, 7, 1, 'oooooosdfd', 1),
-(4, 4, '2025-09-22 00:00:00', 1, 7, 1, 'oooooosdfd', 1),
-(5, 5, '2025-09-22 00:00:00', 1, 1, 1, 'oooooosdfd', 1),
-(6, 6, '2025-09-22 00:00:00', 1, 1, 1, 'qqqqqqq', 1),
-(7, 7, '2025-09-22 00:00:00', 2, 2, 1, 'eeeeee', 1),
-(8, 8, '2025-09-22 00:00:00', 2, 2, 1, 'eeeeee', 1),
-(9, 9, '2025-09-23 00:00:00', 3, 4, 1, 'ÑÑÑÑ,,´´@', 1),
-(10, 10, '2025-09-23 00:00:00', 1, 8, 1, 'cccxcxxc', 1),
-(11, 11, '2025-09-23 00:00:00', 2, 2, 1, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaasaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 1),
-(12, 12, '2025-09-23 00:00:00', 3, 4, 1, '', 1),
-(13, 13, '2025-09-24 00:00:00', 1, 7, 1, 'dasddasdsadsdsdasdas', 1),
-(14, 14, '2025-09-24 00:00:00', 3, 4, 1, 'bcvbcvb', 1),
-(15, 15, '2025-09-24 00:00:00', 3, 4, 1, 'sdaaffsdfsdfsdf', 1),
-(16, 16, '2025-09-24 00:00:00', 3, 4, 1, 'fdfdsfsdsf', 1),
-(17, 17, '2025-09-24 00:00:00', 1, 7, 1, 'dasdasdasd', 1),
-(18, 18, '2025-09-24 00:00:00', 1, 7, 1, 'BBVBBVB', 1),
-(19, 19, '2025-10-01 00:00:00', 1, 7, 1, '', 1);
+(21, 1, '2025-10-01 00:00:00', 1, 7, 1, 'llevar a topacio', 1),
+(22, 2, '2025-10-01 00:00:00', 3, 4, 1, 'ppp', 1),
+(23, 3, '2025-10-01 00:00:00', 2, 2, 1, '0000', 1),
+(24, 4, '2025-10-11 00:00:00', 3, 3, 1, 'cvxcvxcv', 1);
 
 -- --------------------------------------------------------
 
@@ -242,7 +249,8 @@ INSERT INTO `usuarios` (`id`, `username`, `password_hash`, `created_at`, `name`)
 -- Indices de la tabla `clientes`
 --
 ALTER TABLE `clientes`
-  ADD PRIMARY KEY (`id_cliente`);
+  ADD PRIMARY KEY (`id_cliente`),
+  ADD UNIQUE KEY `nit` (`nit`);
 
 --
 -- Indices de la tabla `estados`
@@ -258,6 +266,15 @@ ALTER TABLE `items_remisionados`
   ADD PRIMARY KEY (`id_item`),
   ADD KEY `id_remision` (`id_remision`),
   ADD KEY `fk_items_remisionados_productos` (`id_producto`);
+
+--
+-- Indices de la tabla `movimientos_inventario`
+--
+ALTER TABLE `movimientos_inventario`
+  ADD PRIMARY KEY (`id_movimiento`),
+  ADD KEY `id_producto` (`id_producto`),
+  ADD KEY `id_remision` (`id_remision`),
+  ADD KEY `id_usuario` (`id_usuario`);
 
 --
 -- Indices de la tabla `personas_contacto`
@@ -311,7 +328,13 @@ ALTER TABLE `estados`
 -- AUTO_INCREMENT de la tabla `items_remisionados`
 --
 ALTER TABLE `items_remisionados`
-  MODIFY `id_item` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id_item` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+
+--
+-- AUTO_INCREMENT de la tabla `movimientos_inventario`
+--
+ALTER TABLE `movimientos_inventario`
+  MODIFY `id_movimiento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `personas_contacto`
@@ -323,13 +346,13 @@ ALTER TABLE `personas_contacto`
 -- AUTO_INCREMENT de la tabla `productos`
 --
 ALTER TABLE `productos`
-  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT de la tabla `remisiones`
 --
 ALTER TABLE `remisiones`
-  MODIFY `id_remision` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id_remision` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
@@ -347,6 +370,14 @@ ALTER TABLE `usuarios`
 ALTER TABLE `items_remisionados`
   ADD CONSTRAINT `fk_items_remisionados_productos` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `items_remisionados_ibfk_1` FOREIGN KEY (`id_remision`) REFERENCES `remisiones` (`id_remision`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `movimientos_inventario`
+--
+ALTER TABLE `movimientos_inventario`
+  ADD CONSTRAINT `fk_movimientos_producto` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_movimientos_remision` FOREIGN KEY (`id_remision`) REFERENCES `remisiones` (`id_remision`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_movimientos_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `personas_contacto`

@@ -17,9 +17,9 @@ class Producto {
         $this->conn = $db;
     }
 
-    // Obtener todos los productos
+    // Obtener todos los productos ORDENADOS POR ID ASCENDENTE
     public function obtenerTodos() {
-        $query = "SELECT * FROM " . $this->table_name . " ORDER BY nombre_producto";
+        $query = "SELECT * FROM " . $this->table_name . " ORDER BY id_producto ASC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -74,13 +74,13 @@ class Producto {
         return $stmt->execute();
     }
 
-    // Buscar productos
+    // Buscar productos ORDENADOS POR ID ASCENDENTE
     public function buscar($termino = "") {
         $query = "SELECT id_producto as id, nombre_producto as text, 
                          maneja_inventario, stock_actual, stock_minimo
                  FROM " . $this->table_name . " 
                  WHERE nombre_producto LIKE :termino 
-                 ORDER BY nombre_producto 
+                 ORDER BY id_producto ASC 
                  LIMIT 10";
         
         $stmt = $this->conn->prepare($query);
@@ -118,21 +118,21 @@ class Producto {
         return $stmt->execute();
     }
 
-    // Obtener productos con bajo stock
+    // Obtener productos con bajo stock ORDENADOS POR ID ASCENDENTE
     public function obtenerBajoStock() {
         $query = "SELECT * FROM " . $this->table_name . " 
                   WHERE maneja_inventario = 1 AND stock_actual <= stock_minimo 
-                  ORDER BY stock_actual ASC";
+                  ORDER BY id_producto ASC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Obtener productos que manejan inventario
+    // Obtener productos que manejan inventario ORDENADOS POR ID ASCENDENTE
     public function obtenerConInventario() {
         $query = "SELECT * FROM " . $this->table_name . " 
                   WHERE maneja_inventario = 1 
-                  ORDER BY nombre_producto";
+                  ORDER BY id_producto ASC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

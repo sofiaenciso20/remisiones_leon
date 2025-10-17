@@ -24,7 +24,19 @@ try {
     if ($clienteData) {
         echo json_encode([
             'success' => true,
-            'data' => $clienteData
+            'data' => [
+                'id_cliente' => $clienteData['id_cliente'],
+                'nombre_cliente' => $clienteData['nombre_cliente'],
+                'tipo_cliente' => $clienteData['tipo_cliente'] ?? '',
+                'nit' => $clienteData['nit'] ?? '',
+                'telefono' => $clienteData['telefono'] ?? '',
+                'direccion' => $clienteData['direccion'] ?? '',
+                'correo' => $clienteData['correo'] ?? ''
+            ],
+            'cliente' => [
+                'id_cliente' => $clienteData['id_cliente'],
+                'nombre_cliente' => $clienteData['nombre_cliente']
+            ]
         ]);
     } else {
         echo json_encode([

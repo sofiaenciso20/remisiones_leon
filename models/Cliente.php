@@ -39,20 +39,25 @@ class Cliente {
         $this->nombre_cliente = htmlspecialchars(strip_tags($this->nombre_cliente));
         $this->tipo_cliente = htmlspecialchars(strip_tags($this->tipo_cliente));
         $this->nit = htmlspecialchars(strip_tags($this->nit));
-        $this->direccion = $this->direccion ? htmlspecialchars(strip_tags($this->direccion)) : null;
-        $this->telefono = $this->telefono ? htmlspecialchars(strip_tags($this->telefono)) : null;
-        $this->correo = $this->correo ? htmlspecialchars(strip_tags($this->correo)) : null;
+        
+        // Manejar valores NULL para campos opcionales
+        $direccion = !empty($this->direccion) ? htmlspecialchars(strip_tags($this->direccion)) : null;
+        $telefono = !empty($this->telefono) ? htmlspecialchars(strip_tags($this->telefono)) : null;
+        $correo = !empty($this->correo) ? htmlspecialchars(strip_tags($this->correo)) : null;
         
         $stmt->bindParam(':nombre_cliente', $this->nombre_cliente);
         $stmt->bindParam(':tipo_cliente', $this->tipo_cliente);
         $stmt->bindParam(':nit', $this->nit);
-        $stmt->bindParam(':direccion', $this->direccion);
-        $stmt->bindParam(':telefono', $this->telefono);
-        $stmt->bindParam(':correo', $this->correo);
+        $stmt->bindParam(':direccion', $direccion);
+        $stmt->bindParam(':telefono', $telefono);
+        $stmt->bindParam(':correo', $correo);
         
         if ($stmt->execute()) {
             return $this->conn->lastInsertId();
         }
+        
+        $errorInfo = $stmt->errorInfo();
+        error_log("[DB_FIX] Error en crear Cliente: " . print_r($errorInfo, true));
         return false;
     }
 
@@ -108,8 +113,18 @@ class Cliente {
         return $row['total'];
     }
 
-    // Método adicional: actualizar cliente
     public function actualizar() {
+        // Primero verificar si el NIT ya existe en otro cliente
+        $query_check = "SELECT id_cliente FROM " . $this->table_name . " WHERE nit = :nit AND id_cliente != :id_cliente";
+        $stmt_check = $this->conn->prepare($query_check);
+        $stmt_check->bindParam(':nit', $this->nit);
+        $stmt_check->bindParam(':id_cliente', $this->id_cliente);
+        $stmt_check->execute();
+        
+        if ($stmt_check->rowCount() > 0) {
+            throw new Exception("El NIT ya existe en otro cliente");
+        }
+
         $query = "UPDATE " . $this->table_name . " 
                   SET nombre_cliente = :nombre_cliente, 
                       tipo_cliente = :tipo_cliente, 
@@ -125,32 +140,28 @@ class Cliente {
         $this->nombre_cliente = htmlspecialchars(strip_tags($this->nombre_cliente));
         $this->tipo_cliente = htmlspecialchars(strip_tags($this->tipo_cliente));
         $this->nit = htmlspecialchars(strip_tags($this->nit));
-        $this->direccion = $this->direccion ? htmlspecialchars(strip_tags($this->direccion)) : null;
-        $this->telefono = $this->telefono ? htmlspecialchars(strip_tags($this->telefono)) : null;
-        $this->correo = $this->correo ? htmlspecialchars(strip_tags($this->correo)) : null;
-        $this->id_cliente = htmlspecialchars(strip_tags($this->id_cliente));
+        
+        // Manejar valores NULL para campos opcionales
+        $direccion = !empty($this->direccion) ? htmlspecialchars(strip_tags($this->direccion)) : null;
+        $telefono = !empty($this->telefono) ? htmlspecialchars(strip_tags($this->telefono)) : null;
+        $correo = !empty($this->correo) ? htmlspecialchars(strip_tags($this->correo)) : null;
+        
+        error_log("[DB_FIX] Actualizando cliente - ID: $this->id_cliente, Nombre: $this->nombre_cliente, NIT: $this->nit");
         
         $stmt->bindParam(':nombre_cliente', $this->nombre_cliente);
         $stmt->bindParam(':tipo_cliente', $this->tipo_cliente);
         $stmt->bindParam(':nit', $this->nit);
-        $stmt->bindParam(':direccion', $this->direccion);
-        $stmt->bindParam(':telefono', $this->telefono);
-        $stmt->bindParam(':correo', $this->correo);
+        $stmt->bindParam(':direccion', $direccion);
+        $stmt->bindParam(':telefono', $telefono);
+        $stmt->bindParam(':correo', $correo);
         $stmt->bindParam(':id_cliente', $this->id_cliente);
         
-        // Ejecutar y verificar
         if ($stmt->execute()) {
-            // Verificar si se afectó alguna fila
-            if ($stmt->rowCount() > 0) {
-                return true;
-            } else {
-                // No se afectó ninguna fila, posiblemente los datos son iguales
-                return true;
-            }
+            return true;
         }
         
-        // Log del error si hay problemas
-        error_log("Error en actualizar Cliente: " . implode(", ", $stmt->errorInfo()));
+        $errorInfo = $stmt->errorInfo();
+        error_log("[DB_FIX] Error en actualizar Cliente: " . print_r($errorInfo, true));
         return false;
     }
 
@@ -164,7 +175,40 @@ class Cliente {
         if($stmt->execute()) {
             return true;
         }
+        
+        $errorInfo = $stmt->errorInfo();
+        error_log("[DB_FIX] Error en eliminar Cliente: " . print_r($errorInfo, true));
         return false;
+    }
+
+    // Método adicional: verificar si existe el cliente por NIT (excluyendo un ID específico)
+    public function existePorNit($nit, $excluir_id = null) {
+        $query = "SELECT id_cliente FROM " . $this->table_name . " WHERE nit = :nit";
+        
+        if ($excluir_id) {
+            $query .= " AND id_cliente != :excluir_id";
+        }
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":nit", $nit);
+        
+        if ($excluir_id) {
+            $stmt->bindParam(":excluir_id", $excluir_id);
+        }
+        
+        $stmt->execute();
+        
+        return $stmt->rowCount() > 0;
+    }
+
+    // Método adicional: obtener cliente por NIT
+    public function obtenerPorNit($nit) {
+        $query = "SELECT * FROM " . $this->table_name . " WHERE nit = :nit";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":nit", $nit);
+        $stmt->execute();
+        
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 }
 ?>

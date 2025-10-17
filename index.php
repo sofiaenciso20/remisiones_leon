@@ -10,7 +10,7 @@ $action = $_GET['action'] ?? 'nueva_remision';
 
 switch ($action) {
     case 'inventario':
-        include 'views/inventario.php';
+        include 'inventario.php';
         exit;
     case 'nueva_remision':
     default:
@@ -34,47 +34,175 @@ include 'views/layout/header.php';
 ?>
 
 <style>
-/* Estilos personalizados para mejorar la estética y responsividad */
-.card-header {
-    background-color: #f8f9fa;
+/* Estilos basados en inventario.php */
+.content-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     border-bottom: 1px solid #dee2e6;
+    padding: 1.5rem 0;
 }
 
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border-radius: 0.5rem;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+    padding: 1rem 1.25rem;
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+}
+
+.card-title {
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Mejoras para formularios */
 .form-group label {
     font-weight: 600;
+    color: #495057;
     margin-bottom: 0.5rem;
 }
 
-.btn-agregar-item {
-    margin-bottom: 1rem;
+.form-control, .select2-container .select2-selection--single {
+    border-radius: 0.375rem;
+    border: 1px solid #ced4da;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
+.form-control:focus, .select2-container--focus .select2-selection--single {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-control-lg {
+    font-weight: 500;
+}
+
+/* Mejoras para los selects */
+.select-group {
+    display: flex;
+    width: 100%;
+}
+
+.select-group .select2-container,
+.select-group .form-control {
+    flex: 1;
+    min-width: 0;
+}
+
+.select-group .btn {
+    margin-left: 0.5rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.select2-container--default .select2-selection--single {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    height: auto;
+    padding: 0.375rem 0.75rem;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 1.5;
+    padding: 0;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 100%;
+}
+
+/* Mejoras para botones */
+.btn {
+    border-radius: 0.375rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.btn i {
+    margin-right: 0.5rem;
+}
+
+.btn-group .btn {
+    margin: 0 2px;
+}
+
+/* Items de remisión mejorados */
 .item-row {
     background-color: #f8f9fa;
-    padding: 1rem;
+    padding: 1.25rem;
     margin-bottom: 1rem;
-    border-radius: 0.375rem;
+    border-radius: 0.5rem;
     border: 1px solid #dee2e6;
+    transition: all 0.2s ease;
+}
+
+.item-row:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
 }
 
 .total-general-container {
-    background-color: #e9ecef;
-    padding: 1rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1.25rem;
+    border-radius: 0.5rem;
+    margin-top: 1.5rem;
+    border: 1px solid #dee2e6;
+}
+
+#total-general {
+    font-size: 1.25rem;
+    font-weight: 700;
+    padding: 0.75rem;
     border-radius: 0.375rem;
-    margin-top: 1rem;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.select2-container {
-    width: 100% !important;
+.producto-search-container {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
 }
 
+.select2-producto {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Mejoras para modales */
+.modal-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+    padding: 1.25rem;
+}
+
+.modal-title {
+    font-weight: 600;
+    color: #495057;
+}
+
+.modal-content {
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Mejoras específicas para responsive */
 @media (max-width: 768px) {
     .card-body {
-        padding: 1rem;
+        padding: 1.25rem;
     }
     
     .item-row .row > div {
-        margin-bottom: 0.75rem;
+        margin-bottom: 1rem;
     }
     
     .item-row .btn-danger {
@@ -82,7 +210,12 @@ include 'views/layout/header.php';
         margin-top: 0.5rem;
     }
     
-    .input-group-append .btn {
+    .select-group {
+        flex-direction: column;
+    }
+    
+    .select-group .btn {
+        margin-left: 0;
         margin-top: 0.5rem;
         width: 100%;
     }
@@ -99,66 +232,202 @@ include 'views/layout/header.php';
         margin-top: 0.5rem;
         width: 100%;
     }
+    
+    .card-footer .d-flex {
+        flex-direction: column;
+    }
+    
+    .card-footer .btn {
+        margin-right: 0 !important;
+        margin-bottom: 0.5rem;
+    }
+    
+    .total-general-container .row {
+        text-align: center;
+    }
+    
+    .total-general-container h5 {
+        margin-bottom: 0.5rem;
+    }
 }
 
-/* Mejoras visuales para inputs y selects */
-.form-control, .select2-container .select2-selection--single {
+@media (max-width: 576px) {
+    .container {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    .card-header h3 {
+        font-size: 1.25rem;
+    }
+    
+    .content-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .form-control, .select2-container .select2-selection--single {
+        padding: 0.6rem 0.8rem;
+    }
+}
+
+/* Efectos visuales adicionales */
+.card-hover:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+}
+
+.breadcrumb-item a {
+    color: #6c757d;
+    text-decoration: none;
+}
+
+.breadcrumb-item.active {
+    color: #495057;
+}
+
+/* Asegurar que los elementos de los items se vean bien */
+.item-row .col-md-5,
+.item-row .col-md-3,
+.item-row .col-md-2,
+.item-row .col-md-1 {
+    margin-bottom: 0.75rem;
+}
+
+/* Mejoras para el número de remisión */
+#numero_remision {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Estilos para observaciones */
+.observaciones-responsive {
+    max-height: 200px;
+    overflow-y: auto;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
     border-radius: 0.375rem;
-    border: 1px solid #ced4da;
-    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
 }
 
-.form-control:focus, .select2-container--focus .select2-selection--single {
-    border-color: #80bdff;
-    outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+/* Mejoras visuales para inputs y botones */
+.btn-outline-secondary {
+    border-color: #6c757d;
+    color: #6c757d;
 }
 
-/* Estilo para los botones */
-.btn {
-    border-radius: 0.375rem;
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    color: white;
+}
+
+.alert-success {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-color: rgba(40, 167, 69, 0.2);
+    color: #155724;
+}
+
+/* Mejoras para los iconos */
+.fas, .far {
+    width: 1.25rem;
+    text-align: center;
+}
+
+/* Animaciones suaves */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Estados vacíos */
+.empty-state {
+    padding: 3rem 1rem;
+    text-align: center;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Mejoras para badges */
+.badge {
     font-weight: 500;
 }
 
-.btn-primary {
-    background-color: #007bff;
-    border-color: #007bff;
+.badge.bg-success {
+    background: linear-gradient(135deg, #28a745, #20c997) !important;
 }
 
+.badge.bg-secondary {
+    background: linear-gradient(135deg, #6c757d, #5a6268) !important;
+}
+
+.badge.bg-danger {
+    background: linear-gradient(135deg, #dc3545, #c82333) !important;
+}
+
+.badge.bg-warning {
+    background: linear-gradient(135deg, #ffc107, #e0a800) !important;
+}
+
+.badge.bg-info {
+    background: linear-gradient(135deg, #17a2b8, #138496) !important;
+}
+
+/* Efectos de hover para la tabla */
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.04);
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Botones con gradientes */
 .btn-success {
-    background-color: #28a745;
-    border-color: #28a745;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border: none;
 }
 
-/* Estilo para el total general */
-#total-general {
-    font-size: 1.1rem;
-    padding: 0.5rem;
-    border-radius: 0.375rem;
+.btn-primary {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    border: none;
 }
 
-.producto-search-container {
-    display: flex;
-    gap: 0.5rem;
+.btn-warning {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+    border: none;
 }
 
-.select2-producto {
-    flex: 1;
+.btn-info {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    border: none;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    border: none;
 }
 </style>
 
 <!-- Content Header -->
-<div class="content-header bg-light py-3">
+<div class="content-header bg-light py-4">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-md-6">
-                <h1 class="m-0 text-dark"><i class="fas fa-file-invoice mr-2"></i>Nueva Remisión</h1>
-            </div>
-            <div class="col-md-6">
-                <ol class="breadcrumb justify-content-md-end mb-0">
-                    <li class="breadcrumb-item"><a href="index.php">Inicio</a></li>
-                    <li class="breadcrumb-item active">Nueva Remisión</li>
-                </ol>
+                <h1 class="m-0 text-dark">
+                    <i class="fas fa-file-invoice mr-2"></i>Nueva Remisión
+                </h1>
             </div>
         </div>
     </div>
@@ -167,110 +436,130 @@ include 'views/layout/header.php';
 <!-- Main content -->
 <div class="content py-4">
     <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-12">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-white py-3">
-                        <h3 class="card-title mb-0">
-                            <i class="fas fa-file-invoice text-primary mr-2"></i> Formulario de Remisión
-                        </h3>
-                    </div>
-                    <form id="formRemision">
-                        <div class="card-body p-4">
-                            <div class="row mb-4">
-                                <div class="col-md-6 col-lg-4 mb-3">
-                                    <div class="form-group">
-                                        <label for="numero_remision" class="form-label">Número de Remisión</label>
-                                        <input type="text" class="form-control form-control-lg" id="numero_remision" name="numero_remision" 
-                                               value="<?php echo $siguiente_numero; ?>" readonly>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 col-lg-4 mb-3">
-                                    <div class="form-group">
-                                        <label for="fecha_emision" class="form-label">Fecha de Emisión *</label>
-                                        <input type="date" class="form-control form-control-lg" id="fecha_emision" name="fecha_emision" 
-                                               value="<?php echo date('Y-m-d'); ?>" required>
-                                    </div>
-                                </div>
-                            </div>
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+          
+            <div class="d-flex flex-column flex-md-row gap-2">
+                <a href="listar_remisiones.php" class="btn btn-outline-info">
+                    <i class="fas fa-list mr-1"></i> Ver Remisiones
+                </a>
+                <a href="inventario.php" class="btn btn-outline-secondary">
+                    <i class="fas fa-boxes mr-1"></i> Ir a Inventario
+                </a>
+            </div>
+        </div>
 
-                            <div class="row mb-4">
-                                <div class="col-lg-8 mb-3">
-                                    <div class="form-group">
-                                        <label for="cliente" class="form-label">Cliente *</label>
-                                        <div class="input-group">
-                                            <select class="form-control select2" id="cliente" name="id_cliente" required style="width: 100%;">
-                                                <option value="">Seleccione un cliente...</option>
-                                            </select>
-                                            <div class="input-group-append">
-                                                <button type="button" class="btn btn-success ml-2" data-toggle="modal" data-target="#modalCliente">
-                                                    <i class="fas fa-plus mr-1"></i> Nuevo
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4 mb-3">
-                                    <div class="form-group">
-                                        <label for="persona_contacto" class="form-label">Persona de Contacto</label>
-                                        <div class="input-group">
-                                            <select class="form-control" id="persona_contacto" name="id_persona" style="width: 100%;">
-                                                <option value="">Seleccione...</option>
-                                            </select>
-                                            <div class="input-group-append">
-                                                <button type="button" class="btn btn-success ml-2" onclick="abrirModalPersonaContacto()">
-                                                    <i class="fas fa-plus mr-1"></i> Nueva
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+        <!-- Alertas -->
+        <?php if (isset($_SESSION['mensaje'])): ?>
+            <div class="alert alert-<?php echo $_SESSION['tipo_mensaje']; ?> alert-dismissible fade show" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <div><?php echo $_SESSION['mensaje']; ?></div>
+                </div>
+                <button type="button" class="close" data-dismiss="alert">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <?php unset($_SESSION['mensaje'], $_SESSION['tipo_mensaje']); ?>
+        <?php endif; ?>
 
-                            <div class="form-group mb-4">
-                                <label for="observaciones" class="form-label">Observaciones</label>
-                                <textarea class="form-control" id="observaciones" name="observaciones" rows="3" 
-                                          placeholder="Ingrese observaciones adicionales..."></textarea>
-                            </div>
-
-                            <hr class="my-4">
-
-                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
-                                <h5 class="mb-2 mb-md-0"><i class="fas fa-list mr-2"></i> Items de la Remisión</h5>
-                                <button type="button" class="btn btn-success btn-agregar-item" onclick="agregarItem()">
-                                    <i class="fas fa-plus mr-1"></i> Agregar Item
-                                </button>
-                            </div>
-
-                            <div id="items-container" class="mb-4">
-                                <!-- Los items se agregarán aquí dinámicamente -->
-                            </div>
-                            
-                            <div class="total-general-container">
-                                <div class="row align-items-center">
-                                    <div class="col-md-8 text-md-right text-center mb-2 mb-md-0">
-                                        <h5 class="font-weight-bold mb-0">TOTAL GENERAL:</h5>
-                                    </div>
-                                    <div class="col-md-4 text-center">
-                                        <div class="alert alert-success py-2 font-weight-bold mb-0" id="total-general">$0.00</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card-footer bg-white py-3">
-                            <div class="d-flex flex-column flex-md-row justify-content-end">
-                                <button type="button" class="btn btn-secondary mb-2 mb-md-0 mr-md-2" onclick="limpiarFormulario()">
-                                    <i class="fas fa-broom mr-1"></i> Limpiar
-                                </button>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save mr-1"></i> Guardar Remisión
-                                </button>
-                            </div>
-                        </div>
-                    </form>
+        <div class="card card-hover shadow-sm">
+            <div class="card-header bg-white py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-file-invoice text-primary mr-2"></i> Datos de la Remisión
+                    </h3>
                 </div>
             </div>
+            <form id="formRemision">
+                <div class="card-body p-4">
+                    <div class="row mb-4">
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="form-group">
+                                <label for="numero_remision" class="form-label">Número de Remisión</label>
+                                <input type="text" class="form-control form-control-lg" id="numero_remision" name="numero_remision" 
+                                       value="<?php echo $siguiente_numero; ?>" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="form-group">
+                                <label for="fecha_emision" class="form-label">Fecha de Emisión *</label>
+                                <input type="date" class="form-control form-control-lg" id="fecha_emision" name="fecha_emision" 
+                                       value="<?php echo date('Y-m-d'); ?>" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-lg-8 mb-3">
+                            <div class="form-group">
+                                <label for="cliente" class="form-label">Cliente *</label>
+                                <div class="select-group">
+                                    <select class="form-control select2" id="cliente" name="id_cliente" required>
+                                        <option value="">Seleccione un cliente...</option>
+                                    </select>
+                                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalCliente">
+                                        <i class="fas fa-plus mr-1"></i> Nuevo
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 mb-3">
+                            <div class="form-group">
+                                <label for="persona_contacto" class="form-label">Persona de Contacto</label>
+                                <div class="select-group">
+                                    <select class="form-control" id="persona_contacto" name="id_persona">
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                    <button type="button" class="btn btn-success" onclick="abrirModalPersonaContacto()">
+                                        <i class="fas fa-plus mr-1"></i> Nueva
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label for="observaciones" class="form-label">Observaciones</label>
+                        <textarea class="form-control" id="observaciones" name="observaciones" rows="3" 
+                                  placeholder="Ingrese observaciones adicionales..."></textarea>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
+                        <h5 class="mb-2 mb-md-0"><i class="fas fa-list mr-2"></i> Items de la Remisión</h5>
+                        <button type="button" class="btn btn-success" onclick="agregarItem()">
+                            <i class="fas fa-plus mr-1"></i> Agregar Item
+                        </button>
+                    </div>
+
+                    <div id="items-container" class="mb-4">
+                        <!-- Los items se agregarán aquí dinámicamente -->
+                    </div>
+                    
+                    <div class="total-general-container fade-in">
+                        <div class="row align-items-center">
+                            <div class="col-md-8 text-md-right text-center mb-2 mb-md-0">
+                                <h5 class="font-weight-bold mb-0">TOTAL GENERAL:</h5>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <div class="alert alert-success py-2 font-weight-bold mb-0" id="total-general">$0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer bg-white py-3">
+                    <div class="d-flex flex-column flex-md-row justify-content-end">
+                        <button type="button" class="btn btn-outline-secondary mb-2 mb-md-0 mr-md-2" onclick="limpiarFormulario()">
+                            <i class="fas fa-broom mr-1"></i> Limpiar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save mr-1"></i> Guardar Remisión
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -279,11 +568,11 @@ include 'views/layout/header.php';
 <div class="modal fade" id="modalCliente" tabindex="-1" role="dialog" aria-labelledby="modalClienteLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h4 class="modal-title" id="modalClienteLabel">
-                    <i class="fas fa-user-plus mr-2"></i> Nuevo Cliente
+            <div class="modal-header bg-light">
+                <h4 class="modal-title mb-0" id="modalClienteLabel">
+                    <i class="fas fa-user-plus text-primary mr-2"></i> Nuevo Cliente
                 </h4>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -332,8 +621,8 @@ include 'views/layout/header.php';
                         <input type="email" class="form-control" id="correo" name="correo">
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
                         <i class="fas fa-times mr-1"></i> Cancelar
                     </button>
                     <button type="submit" class="btn btn-success">
@@ -349,11 +638,11 @@ include 'views/layout/header.php';
 <div class="modal fade" id="modalPersonaContacto" tabindex="-1" role="dialog" aria-labelledby="modalPersonaContactoLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h4 class="modal-title" id="modalPersonaContactoLabel">
-                    <i class="fas fa-user-plus mr-2"></i> Nueva Persona de Contacto
+            <div class="modal-header bg-light">
+                <h4 class="modal-title mb-0" id="modalPersonaContactoLabel">
+                    <i class="fas fa-user-plus text-primary mr-2"></i> Nueva Persona de Contacto
                 </h4>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -386,8 +675,8 @@ include 'views/layout/header.php';
                         <input type="email" class="form-control" id="correo_persona" name="correo">
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
                         <i class="fas fa-times mr-1"></i> Cancelar
                     </button>
                     <button type="submit" class="btn btn-success">
@@ -403,11 +692,11 @@ include 'views/layout/header.php';
 <div class="modal fade" id="modalProducto" tabindex="-1" role="dialog" aria-labelledby="modalProductoLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h4 class="modal-title" id="modalProductoLabel">
-                    <i class="fas fa-box mr-2"></i> Nuevo Producto
+            <div class="modal-header bg-light">
+                <h4 class="modal-title mb-0" id="modalProductoLabel">
+                    <i class="fas fa-box text-primary mr-2"></i> Nuevo Producto
                 </h4>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -421,8 +710,8 @@ include 'views/layout/header.php';
                                placeholder="Ingrese el nombre del producto">
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
                         <i class="fas fa-times mr-1"></i> Cancelar
                     </button>
                     <button type="submit" class="btn btn-success">
@@ -665,7 +954,7 @@ let contadorItems = 0;
 function agregarItem() {
     contadorItems++;
     const itemHtml = `
-        <div class="item-row" id="item-${contadorItems}">
+        <div class="item-row fade-in" id="item-${contadorItems}">
             <div class="row align-items-end">
                 <div class="col-md-5 col-lg-6 mb-2">
                     <div class="form-group">
